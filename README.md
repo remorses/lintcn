@@ -127,6 +127,30 @@ if (user instanceof Error) return user
 void getUser("id")
 ```
 
+## Version pinning
+
+**Pin lintcn in your `package.json`** — do not use `^` or `~`:
+
+```json
+{
+  "devDependencies": {
+    "lintcn": "0.1.0"
+  }
+}
+```
+
+Each lintcn release bundles a specific tsgolint version. Updating lintcn can change the underlying tsgolint API, which may cause your rules to no longer compile. Always update consciously:
+
+1. Check the [changelog](./CHANGELOG.md) for tsgolint version changes
+2. Run `npx lintcn build` after updating to verify your rules still compile
+3. Fix any compilation errors before committing
+
+You can test against an unreleased tsgolint version without updating lintcn:
+
+```bash
+npx lintcn lint --tsgolint-version v0.10.0
+```
+
 ## Prerequisites
 
 - **Node.js** — for the CLI

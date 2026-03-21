@@ -1,3 +1,14 @@
+## 0.2.0
+
+1. **Pinned tsgolint version** — each lintcn release bundles a specific tsgolint version (`v0.9.2`). Builds are now reproducible: everyone on the same lintcn version compiles against the same tsgolint API. Previously used `main` branch which was non-deterministic.
+
+2. **`--tsgolint-version` flag** — override the pinned version for testing unreleased tsgolint:
+   ```bash
+   npx lintcn lint --tsgolint-version v0.10.0
+   ```
+
+3. **Version pinning docs** — README now explains why you should pin lintcn in `package.json` (no `^` or `~`) and how to update safely.
+
 ## 0.1.0
 
 1. **Initial release** — CLI for adding type-aware TypeScript lint rules as Go files to your project:

@@ -21,7 +21,13 @@ async function checkGoInstalled(): Promise<void> {
   }
 }
 
-export async function buildBinary({ rebuild }: { rebuild: boolean }): Promise<string> {
+export async function buildBinary({
+  rebuild,
+  tsgolintVersion,
+}: {
+  rebuild: boolean
+  tsgolintVersion: string
+}): Promise<string> {
   await checkGoInstalled()
 
   const lintcnDir = getLintcnDir()
@@ -34,15 +40,15 @@ export async function buildBinary({ rebuild }: { rebuild: boolean }): Promise<st
     throw new Error('No rules found in .lintcn/. Run `lintcn add <url>` to add rules.')
   }
 
-  console.log(`Found ${rules.length} custom rule${rules.length === 1 ? '' : 's'}`)
+  console.log(`Found ${rules.length} custom rule${rules.length === 1 ? '' : 's'} (tsgolint ${tsgolintVersion})`)
 
   // ensure tsgolint source
-  const tsgolintDir = await ensureTsgolintSource(DEFAULT_TSGOLINT_VERSION)
+  const tsgolintDir = await ensureTsgolintSource(tsgolintVersion)
 
   // compute content hash
   const contentHash = await computeContentHash({
     lintcnDir,
-    tsgolintVersion: DEFAULT_TSGOLINT_VERSION,
+    tsgolintVersion,
   })
 
   // check cache
@@ -77,12 +83,14 @@ export async function buildBinary({ rebuild }: { rebuild: boolean }): Promise<st
 
 export async function lint({
   rebuild,
+  tsgolintVersion,
   passthroughArgs,
 }: {
   rebuild: boolean
+  tsgolintVersion: string
   passthroughArgs: string[]
 }): Promise<number> {
-  const binaryPath = await buildBinary({ rebuild })
+  const binaryPath = await buildBinary({ rebuild, tsgolintVersion })
 
   // run the binary with passthrough args, inheriting stdio
   return new Promise((resolve) => {

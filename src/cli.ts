@@ -9,6 +9,7 @@ import { addRule } from './commands/add.ts'
 import { lint, buildBinary } from './commands/lint.ts'
 import { listRules } from './commands/list.ts'
 import { removeRule } from './commands/remove.ts'
+import { DEFAULT_TSGOLINT_VERSION } from './cache.ts'
 
 const require = createRequire(import.meta.url)
 const packageJson = require('../package.json') as { version: string }
@@ -43,7 +44,9 @@ cli
   .option('--rebuild', 'Force rebuild even if cached binary exists')
   .option('--tsconfig <path>', 'Path to tsconfig.json')
   .option('--list-files', 'List matched files')
+  .option('--tsgolint-version [version]', 'Override the pinned tsgolint version (tag or commit). For testing unreleased tsgolint versions.')
   .action(async (options) => {
+    const tsgolintVersion = (options.tsgolintVersion as string) || DEFAULT_TSGOLINT_VERSION
     const passthroughArgs: string[] = []
     if (options.tsconfig) {
       passthroughArgs.push('--tsconfig', options.tsconfig as string)
@@ -58,6 +61,7 @@ cli
     }
     const exitCode = await lint({
       rebuild: !!options.rebuild,
+      tsgolintVersion,
       passthroughArgs,
     })
     process.exit(exitCode)
@@ -66,8 +70,10 @@ cli
 cli
   .command('build', 'Build the custom tsgolint binary without running it')
   .option('--rebuild', 'Force rebuild even if cached binary exists')
+  .option('--tsgolint-version [version]', 'Override the pinned tsgolint version (tag or commit). For testing unreleased tsgolint versions.')
   .action(async (options) => {
-    const binaryPath = await buildBinary({ rebuild: !!options.rebuild })
+    const tsgolintVersion = (options.tsgolintVersion as string) || DEFAULT_TSGOLINT_VERSION
+    const binaryPath = await buildBinary({ rebuild: !!options.rebuild, tsgolintVersion })
     console.log(binaryPath)
   })
 

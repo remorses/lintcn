@@ -8,8 +8,11 @@ import os from 'node:os'
 import path from 'node:path'
 import { execAsync } from './exec.ts'
 
-// Default tsgolint version — pinned to a known-good commit
-export const DEFAULT_TSGOLINT_VERSION = 'main'
+// Pinned tsgolint version — updated with each lintcn release.
+// This ensures reproducible builds: every user on the same lintcn version
+// compiles rules against the same tsgolint API. Changing this is a conscious
+// decision — tsgolint API changes can break user rules.
+export const DEFAULT_TSGOLINT_VERSION = 'v0.9.2'
 
 export function getCacheDir(): string {
   return path.join(os.homedir(), '.cache', 'lintcn')
@@ -43,12 +46,13 @@ export async function ensureTsgolintSource(version: string): Promise<string> {
 
   fs.mkdirSync(sourceDir, { recursive: true })
 
-  // clone with depth 1 for speed
-  const cloneArgs = ['clone', '--depth', '1', '--recurse-submodules', '--shallow-submodules']
-  if (version !== 'main') {
-    cloneArgs.push('--branch', version)
-  }
-  cloneArgs.push('https://github.com/oxc-project/tsgolint.git', sourceDir)
+  // clone with depth 1 for speed — --branch works with tags and branches
+  const cloneArgs = [
+    'clone', '--depth', '1',
+    '--branch', version,
+    '--recurse-submodules', '--shallow-submodules',
+    'https://github.com/oxc-project/tsgolint.git', sourceDir,
+  ]
 
   await execAsync('git', cloneArgs)
 
