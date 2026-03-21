@@ -3,7 +3,7 @@
 
 import fs from 'node:fs'
 import { spawn } from 'node:child_process'
-import { getLintcnDir } from '../paths.ts'
+import { requireLintcnDir } from '../paths.ts'
 import { discoverRules } from '../discover.ts'
 import { generateBuildWorkspace } from '../codegen.ts'
 import { ensureTsgolintSource, DEFAULT_TSGOLINT_VERSION, cachedBinaryExists, getBinaryPath, getBuildDir, getBinDir } from '../cache.ts'
@@ -30,10 +30,7 @@ export async function buildBinary({
 }): Promise<string> {
   await checkGoInstalled()
 
-  const lintcnDir = getLintcnDir()
-  if (!fs.existsSync(lintcnDir)) {
-    throw new Error('No .lintcn/ directory found. Run `lintcn add <url>` first.')
-  }
+  const lintcnDir = requireLintcnDir()
 
   const rules = discoverRules(lintcnDir)
   if (rules.length === 0) {

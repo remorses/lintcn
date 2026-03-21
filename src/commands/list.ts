@@ -1,13 +1,12 @@
 // lintcn list — list installed rules with metadata from .lintcn/
 
-import fs from 'node:fs'
-import { getLintcnDir } from '../paths.ts'
+import { findLintcnDir } from '../paths.ts'
 import { discoverRules } from '../discover.ts'
 
 export function listRules(): void {
-  const lintcnDir = getLintcnDir()
+  const lintcnDir = findLintcnDir()
 
-  if (!fs.existsSync(lintcnDir)) {
+  if (!lintcnDir) {
     console.log('No .lintcn/ directory found. Run `lintcn add <url>` to add rules.')
     return
   }

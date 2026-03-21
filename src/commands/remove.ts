@@ -2,15 +2,11 @@
 
 import fs from 'node:fs'
 import path from 'node:path'
-import { getLintcnDir } from '../paths.ts'
+import { requireLintcnDir } from '../paths.ts'
 import { discoverRules } from '../discover.ts'
 
 export function removeRule(name: string): void {
-  const lintcnDir = getLintcnDir()
-
-  if (!fs.existsSync(lintcnDir)) {
-    throw new Error('No .lintcn/ directory found.')
-  }
+  const lintcnDir = requireLintcnDir()
 
   // match by lintcn:name metadata or by filename
   const rules = discoverRules(lintcnDir)

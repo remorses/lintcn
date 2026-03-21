@@ -58,6 +58,7 @@
     "typescript": "5.8.2"
   },
   "dependencies": {
+    "find-up": "^8.0.0",
     "goke": "^6.3.0"
   }
 }
