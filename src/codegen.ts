@@ -1,17 +1,14 @@
 // Generate Go workspace files for building a custom tsgolint binary.
-// Creates:
-//   .lintcn/go.work       — workspace for gopls (editor support)
-//   .lintcn/go.mod        — module declaration
-//   build/go.work          — build workspace in cache dir
-//   build/wrapper/go.mod   — wrapper module
-//   build/wrapper/main.go  — tsgolint main.go with custom rules appended
+// With the fork (remorses/tsgolint) exposing pkg/runner.Run(), codegen is
+// minimal: a 10-line main.go template + go.work with shim replaces.
+// No regex surgery, no file copying, no fragile string manipulation.
 
 import fs from 'node:fs'
 import path from 'node:path'
 import type { RuleMetadata } from './discover.ts'
 
-// All replace directives needed from tsgolint's go.mod.
-// These redirect shim module paths to local directories inside the tsgolint source.
+// Shim modules that need replace directives in go.work.
+// These redirect module paths to local directories inside the tsgolint source.
 const SHIM_MODULES = [
   'ast',
   'bundled',
@@ -35,14 +32,7 @@ function generateReplaceDirectives(tsgolintRelPath: string): string {
   }).join('\n')
 }
 
-/** Generate .lintcn/go.work and .lintcn/go.mod for editor/gopls support.
- *
- *  Key learnings from testing:
- *  - Module name MUST be a child path of github.com/typescript-eslint/tsgolint
- *    so Go allows importing internal/ packages across the module boundary.
- *  - go.work must `use` both .tsgolint AND .tsgolint/typescript-go since
- *    tsgolint's own go.work (which does this) is ignored by the outer workspace.
- *  - go.mod should be minimal (no requires) — the workspace resolves everything. */
+/** Generate .lintcn/go.work and .lintcn/go.mod for editor/gopls support. */
 export function generateEditorGoFiles(lintcnDir: string): void {
   const goWork = `go 1.26
 
@@ -57,7 +47,8 @@ ${generateReplaceDirectives('./.tsgolint')}
 )
 `
 
-  const goMod = `module github.com/typescript-eslint/tsgolint/lintcn-rules
+  // No child-path hack needed — pkg/ is public, any module name works
+  const goMod = `module lintcn-rules
 
 go 1.26
 `
@@ -78,10 +69,9 @@ go.sum
   }
 }
 
-/** Generate build workspace in cache dir for compiling the custom binary.
- *  Instead of hardcoding the built-in rule list, we copy tsgolint's actual
- *  main.go and inject custom rule imports + entries. This way the generated
- *  code always matches the pinned tsgolint version. */
+/** Generate build workspace for compiling the custom binary.
+ *  With pkg/runner.Run(), the generated main.go is a static template —
+ *  no regex surgery or file copying needed. */
 export function generateBuildWorkspace({
   buildDir,
   tsgolintDir,
@@ -109,7 +99,7 @@ export function generateBuildWorkspace({
   }
   fs.symlinkSync(path.resolve(lintcnDir), rulesLink)
 
-  // go.work — must include typescript-go submodule and use child module paths
+  // go.work
   const goWork = `go 1.26
 
 use (
@@ -125,92 +115,41 @@ ${generateReplaceDirectives('./tsgolint')}
 `
   fs.writeFileSync(path.join(buildDir, 'go.work'), goWork)
 
-  // wrapper/go.mod — must be child path of tsgolint for internal/ access.
-  // Minimal: no require block. The workspace resolves all dependencies.
-  // Adding explicit requires with v0.0.0 triggers Go proxy lookups that fail.
-  const wrapperGoMod = `module github.com/typescript-eslint/tsgolint/lintcn-wrapper
+  // wrapper/go.mod — simple module name, no child-path hack needed
+  const wrapperGoMod = `module lintcn-wrapper
 
 go 1.26
 `
   fs.writeFileSync(path.join(buildDir, 'wrapper', 'go.mod'), wrapperGoMod)
 
-  // copy all supporting .go files from cmd/tsgolint/ (headless, payload, etc.)
-  const wrapperDir = path.join(buildDir, 'wrapper')
-  copyTsgolintCmdFiles(tsgolintDir, wrapperDir)
-
-  // wrapper/main.go — copy from tsgolint and inject custom rules
-  const mainGo = generateMainGoFromSource(tsgolintDir, rules)
-  fs.writeFileSync(path.join(wrapperDir, 'main.go'), mainGo)
+  // wrapper/main.go — simple template, no regex or string surgery
+  const mainGo = generateMainGo(rules)
+  fs.writeFileSync(path.join(buildDir, 'wrapper', 'main.go'), mainGo)
 }
 
-/** Copy tsgolint's main.go and transform it to only include custom rules.
- *  Two targeted string operations on the copied source:
- *  1. Remove all /internal/rules/ import lines (built-in rule packages)
- *  2. Replace allRules body with only custom lintcn.* entries
- *  Everything else (printDiagnostic, runMain, headless) stays untouched. */
-function generateMainGoFromSource(tsgolintDir: string, customRules: RuleMetadata[]): string {
-  const mainGoPath = path.join(tsgolintDir, 'cmd', 'tsgolint', 'main.go')
-  const original = fs.readFileSync(mainGoPath, 'utf-8')
-
-  // 1. Remove built-in rule import lines, add lintcn import
-  const lines = original.split('\n')
-  const filtered = lines.filter((line) => {
-    return !line.includes('/internal/rules/')
-  })
-
-  // Insert lintcn import before the first shim import (microsoft/typescript-go)
-  const lintcnImport = `\tlintcn "github.com/typescript-eslint/tsgolint/lintcn-rules"`
-  let shimImportIndex = -1
-  for (let i = 0; i < filtered.length; i++) {
-    if (filtered[i].includes('microsoft/typescript-go/shim')) {
-      shimImportIndex = i
-      break
-    }
-  }
-  if (shimImportIndex === -1) {
-    throw new Error(
-      'Failed to find shim import in tsgolint main.go. The source layout may have changed.',
-    )
-  }
-  if (customRules.length > 0) {
-    filtered.splice(shimImportIndex, 0, lintcnImport, '')
-  }
-
-  let mainGo = filtered.join('\n')
-
-  // 2. Replace allRules body with only custom entries
-  const customEntries = customRules.map((r) => {
-    return `\tlintcn.${r.varName},`
+/** Generate a minimal main.go that imports user rules and calls runner.Run().
+ *  This is a static template — no copying or patching of tsgolint source. */
+function generateMainGo(rules: RuleMetadata[]): string {
+  const ruleEntries = rules.map((r) => {
+    return `\t\tlintcn.${r.varName},`
   }).join('\n')
 
-  const allRulesPattern = /var allRules = \[]rule\.Rule\{[^}]*\}/s
-  if (!allRulesPattern.test(mainGo)) {
-    throw new Error(
-      'Failed to find allRules slice in tsgolint main.go. The source layout may have changed.',
-    )
-  }
+  return `// Code generated by lintcn. DO NOT EDIT.
+package main
 
-  mainGo = mainGo.replace(
-    allRulesPattern,
-    `var allRules = []rule.Rule{\n${customEntries}\n}`,
-  )
+import (
+\t"os"
 
-  // assertion: verify custom rules are present
-  if (customRules.length > 0 && !mainGo.includes(`lintcn.${customRules[0].varName}`)) {
-    throw new Error('Custom rule injection verification failed.')
-  }
+\t"github.com/typescript-eslint/tsgolint/pkg/rule"
+\t"github.com/typescript-eslint/tsgolint/pkg/runner"
+\tlintcn "lintcn-rules"
+)
 
-  return mainGo
+func main() {
+\trules := []rule.Rule{
+${ruleEntries}
+\t}
+\tos.Exit(runner.Run(rules, os.Args[1:]))
 }
-
-/** Copy all supporting .go files from cmd/tsgolint/ into the wrapper dir.
- *  main.go is generated separately with custom rules injected. */
-export function copyTsgolintCmdFiles(tsgolintDir: string, wrapperDir: string): void {
-  const cmdDir = path.join(tsgolintDir, 'cmd', 'tsgolint')
-  const files = fs.readdirSync(cmdDir).filter((f) => {
-    return f.endsWith('.go') && f !== 'main.go' && !f.endsWith('_test.go')
-  })
-  for (const file of files) {
-    fs.copyFileSync(path.join(cmdDir, file), path.join(wrapperDir, file))
-  }
+`
 }
