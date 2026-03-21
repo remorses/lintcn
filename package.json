@@ -1,6 +1,6 @@
 {
   "name": "lintcn",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "description": "The shadcn for type-aware TypeScript lint rules. Browse, pick, and copy rules into your project.",
   "bin": "dist/cli.js",
@@ -24,7 +24,8 @@
   "files": [
     "src",
     "dist",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "rm -rf dist *.tsbuildinfo && tsc && chmod +x dist/cli.js",
