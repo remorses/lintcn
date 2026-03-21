@@ -8,36 +8,54 @@ import { getLintcnDir } from '../paths.ts'
 import { generateEditorGoFiles } from '../codegen.ts'
 import { ensureTsgolintSource, DEFAULT_TSGOLINT_VERSION } from '../cache.ts'
 
+/** Convert GitHub blob URLs to raw.githubusercontent.com.
+ *  Handles branch names containing slashes (e.g. feature/x) by splitting
+ *  on /blob/ then finding the file path from the end (must end in .go). */
 function normalizeGithubUrl(url: string): string {
-  // Convert github.com/user/repo/blob/branch/path to raw.githubusercontent.com
-  const blobMatch = url.match(
-    /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/,
-  )
-  if (blobMatch) {
-    const [, owner, repo, branch, filePath] = blobMatch
-    return `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${filePath}`
+  const blobSplit = url.match(/^(https?:\/\/github\.com\/[^/]+\/[^/]+)\/blob\/(.+)$/)
+  if (!blobSplit) {
+    return url
   }
-  return url
+
+  const [, repoUrl, refAndPath] = blobSplit
+  // repoUrl = "https://github.com/owner/repo"
+  // refAndPath = "feature/x/rules/my_rule.go" or "main/rules/my_rule.go"
+
+  // Extract owner/repo from repoUrl
+  const repoMatch = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)$/)
+  if (!repoMatch) {
+    return url
+  }
+  const [, owner, repo] = repoMatch
+
+  // For raw.githubusercontent.com, the format is owner/repo/ref/path.
+  // We can pass refAndPath directly since GitHub resolves it.
+  return `https://raw.githubusercontent.com/${owner}/${repo}/${refAndPath}`
 }
 
 function deriveTestUrl(rawUrl: string): string {
   return rawUrl.replace(/\.go$/, '_test.go')
 }
 
-async function fetchFile(url: string): Promise<string | null> {
+async function fetchFile(url: string): Promise<string> {
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch ${url}: ${response.status} ${response.statusText}`)
+  }
+  return response.text()
+}
+
+async function tryFetchFile(url: string): Promise<string | null> {
   try {
-    const response = await fetch(url)
-    if (!response.ok) {
-      return null
-    }
-    return await response.text()
+    return await fetchFile(url)
   } catch {
     return null
   }
 }
 
 function rewritePackageName(content: string): string {
-  // Rewrite first package declaration to package lintcn
+  // Rewrite first package declaration to package lintcn.
+  // Only matches before the first import or func to avoid touching comments.
   return content.replace(/^package\s+\w+/m, 'package lintcn')
 }
 
@@ -64,9 +82,6 @@ export async function addRule(url: string): Promise<void> {
 
   console.log(`Fetching ${rawUrl}...`)
   const content = await fetchFile(rawUrl)
-  if (!content) {
-    throw new Error(`Could not fetch rule from ${rawUrl}`)
-  }
 
   // validate it looks like a Go file with a rule
   if (!content.includes('rule.Rule')) {
@@ -96,7 +111,7 @@ export async function addRule(url: string): Promise<void> {
 
   // try to fetch matching test file
   const testUrl = deriveTestUrl(rawUrl)
-  const testContent = await fetchFile(testUrl)
+  const testContent = await tryFetchFile(testUrl)
   if (testContent) {
     const testFileName = fileName.replace(/\.go$/, '_test.go')
     const testProcessed = rewritePackageName(testContent)

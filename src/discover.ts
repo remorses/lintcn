@@ -17,7 +17,9 @@ export interface RuleMetadata {
   fileName: string
 }
 
-const RULE_VAR_RE = /^var\s+(\w+)\s*=\s*rule\.Rule\s*\{/m
+// Matches `var XxxRule = rule.Rule{` with optional leading whitespace
+// and optional import alias (e.g. `r.Rule{` if imported as `r "...rule"`)
+const RULE_VAR_RE = /^\s*var\s+(\w+)\s*=\s*\w*\.?Rule\s*\{/m
 const METADATA_RE = /^\/\/\s*lintcn:(\w+)\s+(.+)$/gm
 
 export function parseMetadata(content: string): Record<string, string> {
@@ -50,6 +52,13 @@ export function discoverRules(lintcnDir: string): RuleMetadata[] {
 
     const varName = parseRuleVar(content)
     if (!varName) {
+      // warn if file contains rule.Rule but we couldn't parse the var name
+      if (content.includes('rule.Rule')) {
+        console.warn(
+          `Warning: ${fileName} contains rule.Rule but no exported var was found. ` +
+          `Expected pattern: var XxxRule = rule.Rule{`,
+        )
+      }
       continue
     }
 

@@ -165,23 +165,38 @@ function generateMainGoFromSource(tsgolintDir: string, customRules: RuleMetadata
       lastRuleImportIndex = i
     }
   }
-  if (lastRuleImportIndex !== -1) {
-    lines.splice(lastRuleImportIndex + 1, 0, lintcnImport)
+  if (lastRuleImportIndex === -1) {
+    throw new Error(
+      'Failed to inject lintcn import: no /internal/rules/ import found in tsgolint main.go. ' +
+      'The tsgolint source layout may have changed.',
+    )
   }
-
+  lines.splice(lastRuleImportIndex + 1, 0, lintcnImport)
   mainGo = lines.join('\n')
 
   // Add custom rule entries to allRules slice.
-  // Find the pattern: last "pkg.XxxRule," line before a lone "}"
   const customEntries = customRules.map((r) => {
     return `\tlintcn.${r.varName},`
   }).join('\n')
 
-  // Find "var allRules = []rule.Rule{" ... "}" and insert before closing }
+  // Find last "pkg.XxxRule," entry before "}\n...var allRulesByName"
+  const prevMainGo = mainGo
   mainGo = mainGo.replace(
     /(\w+\.\w+Rule,\s*\n)(}\s*\n\s*var allRulesByName)/,
     `$1${customEntries}\n$2`,
   )
+
+  if (mainGo === prevMainGo) {
+    throw new Error(
+      'Failed to inject custom rules into allRules slice: pattern not found in tsgolint main.go. ' +
+      'The tsgolint source layout may have changed.',
+    )
+  }
+
+  // final assertion: verify our injections are present
+  if (!mainGo.includes(`lintcn.${customRules[0].varName}`)) {
+    throw new Error('Custom rule injection verification failed.')
+  }
 
   return mainGo
 }
