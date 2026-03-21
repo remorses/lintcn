@@ -13,8 +13,11 @@ npm install -D lintcn
 ## Usage
 
 ```bash
-# Add a rule by URL
-npx lintcn add https://github.com/user/repo/blob/main/rules/no_unhandled_error.go
+# Add a built-in tsgolint rule
+npx lintcn add https://github.com/oxc-project/tsgolint/blob/main/internal/rules/no_floating_promises/no_floating_promises.go
+
+# Add a custom rule from any repo
+npx lintcn add https://github.com/remorses/lintcn/blob/main/rules/no_unhandled_error.go
 
 # Lint your project
 npx lintcn lint
@@ -26,8 +29,13 @@ npx lintcn lint --tsconfig tsconfig.build.json
 npx lintcn list
 
 # Remove a rule
-npx lintcn remove no-unhandled-error
+npx lintcn remove no-floating-promises
+
+# Clean cached tsgolint source + binaries
+npx lintcn clean
 ```
+
+Browse all 50+ available built-in rules in the [tsgolint rules directory](https://github.com/oxc-project/tsgolint/tree/main/internal/rules).
 
 ## How it works
 
@@ -37,10 +45,10 @@ Rules live as `.go` files in `.lintcn/` at your project root. You own the source
 my-project/
 ├── .lintcn/
 │   ├── .gitignore                      ← ignores generated Go files
-│   ├── no_unhandled_error.go           ← your rule (committed)
-│   └── no_unhandled_error_test.go      ← its tests (committed)
+│   ├── no_floating_promises.go         ← your rule (committed)
+│   ├── no_floating_promises_test.go    ← its tests (committed)
+│   └── no_unhandled_error.go           ← another rule
 ├── src/
-│   ├── index.ts
 │   └── ...
 ├── tsconfig.json
 └── package.json
@@ -55,11 +63,17 @@ When you run `npx lintcn lint`, the CLI:
 
 You can run `lintcn lint` from any subdirectory — it walks up to find `.lintcn/` and lints the cwd project.
 
-## Writing a rule
+## Writing custom rules
 
-Every rule is a Go file with `package lintcn` that exports a `rule.Rule` variable.
+To help AI agents write and modify rules, install the lintcn skill:
 
-Here's a rule that errors when you discard the return value of a function that returns `Error | T` — enforcing the [errore](https://errore.org) pattern:
+```bash
+npx skills add remorses/lintcn
+```
+
+This gives your AI agent the full tsgolint rule API reference — AST visitors, type checker, reporting, fixes, and testing patterns.
+
+Every rule is a Go file with `package lintcn` that exports a `rule.Rule` variable:
 
 ```go
 // lintcn:name no-unhandled-error
@@ -136,7 +150,7 @@ void getUser("id")
 ```json
 {
   "devDependencies": {
-    "lintcn": "0.4.0"
+    "lintcn": "0.5.0"
   }
 }
 ```
@@ -146,12 +160,6 @@ Each lintcn release bundles a specific tsgolint version. Updating lintcn can cha
 1. Check the [changelog](./CHANGELOG.md) for tsgolint version changes
 2. Run `npx lintcn build` after updating to verify your rules still compile
 3. Fix any compilation errors before committing
-
-You can test against an unreleased tsgolint version without updating lintcn:
-
-```bash
-npx lintcn lint --tsgolint-version v0.10.0
-```
 
 ## Prerequisites
 
