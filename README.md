@@ -1,12 +1,140 @@
 # lintcn
 
-The [shadcn](https://ui.shadcn.com) for type-aware TypeScript lint rules.
+The [shadcn](https://ui.shadcn.com) for type-aware TypeScript lint rules. Powered by [tsgolint](https://github.com/oxc-project/tsgolint).
 
-Browse rules, pick the ones you need, copy them into your project. You own the code.
+Add rules by URL, own the source, customize freely. Rules are Go files that use the TypeScript type checker for deep analysis — things ESLint can't do.
 
-## Coming soon
+## Install
 
 ```bash
-npx lintcn add no-floating-promises
-npx lintcn add no-unused-result
+npm install -D lintcn
 ```
+
+## Usage
+
+```bash
+# Add a rule by URL
+npx lintcn add https://github.com/user/repo/blob/main/rules/no_unhandled_error.go
+
+# Lint your project
+npx lintcn lint
+
+# Lint with a specific tsconfig
+npx lintcn lint --tsconfig tsconfig.build.json
+
+# List installed rules
+npx lintcn list
+
+# Remove a rule
+npx lintcn remove no-unhandled-error
+```
+
+## How it works
+
+Rules live as `.go` files in `.lintcn/` at your project root. You own the source — edit, customize, delete.
+
+```
+my-project/
+├── .lintcn/
+│   ├── .gitignore                      ← ignores generated Go files
+│   ├── no_unhandled_error.go           ← your rule (committed)
+│   └── no_unhandled_error_test.go      ← its tests (committed)
+├── src/
+│   ├── index.ts
+│   └── ...
+├── tsconfig.json
+└── package.json
+```
+
+When you run `npx lintcn lint`, the CLI:
+
+1. Scans `.lintcn/*.go` for rule definitions
+2. Generates a Go workspace with all 50+ built-in tsgolint rules + your custom rules
+3. Compiles a custom binary (cached — rebuilds only when rules change)
+4. Runs the binary against your project
+
+## Writing a rule
+
+Every rule is a Go file with `package lintcn` that exports a `rule.Rule` variable.
+
+Here's a rule that errors when you discard the return value of a function that returns `Error | T` — enforcing the [errore](https://errore.org) pattern:
+
+```go
+// lintcn:name no-unhandled-error
+// lintcn:description Disallow discarding Error-typed return values
+
+package lintcn
+
+import (
+    "github.com/microsoft/typescript-go/shim/ast"
+    "github.com/microsoft/typescript-go/shim/checker"
+    "github.com/typescript-eslint/tsgolint/internal/rule"
+    "github.com/typescript-eslint/tsgolint/internal/utils"
+)
+
+var NoUnhandledErrorRule = rule.Rule{
+    Name: "no-unhandled-error",
+    Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
+        return rule.RuleListeners{
+            ast.KindExpressionStatement: func(node *ast.Node) {
+                expression := ast.SkipParentheses(node.AsExpressionStatement().Expression)
+
+                if ast.IsVoidExpression(expression) {
+                    return // void = intentional discard
+                }
+
+                innerExpr := expression
+                if ast.IsAwaitExpression(innerExpr) {
+                    innerExpr = ast.SkipParentheses(innerExpr.Expression())
+                }
+                if !ast.IsCallExpression(innerExpr) {
+                    return
+                }
+
+                t := ctx.TypeChecker.GetTypeAtLocation(expression)
+
+                if utils.IsTypeFlagSet(t, checker.TypeFlagsVoid|checker.TypeFlagsUndefined|checker.TypeFlagsNever) {
+                    return
+                }
+
+                for _, part := range utils.UnionTypeParts(t) {
+                    if utils.IsErrorLike(ctx.Program, ctx.TypeChecker, part) {
+                        ctx.ReportNode(node, rule.RuleMessage{
+                            Id:          "noUnhandledError",
+                            Description: "Error-typed return value is not handled.",
+                        })
+                        return
+                    }
+                }
+            },
+        }
+    },
+}
+```
+
+This catches code like:
+
+```typescript
+// error — result discarded, Error not handled
+getUser("id")           // returns Error | User
+await fetchData("/api") // returns Promise<Error | Data>
+
+// ok — result is checked
+const user = getUser("id")
+if (user instanceof Error) return user
+
+// ok — explicitly discarded
+void getUser("id")
+```
+
+## Prerequisites
+
+- **Node.js** — for the CLI
+- **Go 1.26+** — for compiling rules (`go.dev/dl`)
+- **Git** — for cloning tsgolint source on first build
+
+Go is only needed for `lintcn lint` / `lintcn build`. Adding and listing rules works without Go.
+
+## License
+
+MIT

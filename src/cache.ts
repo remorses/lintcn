@@ -70,6 +70,20 @@ export async function ensureTsgolintSource(version: string): Promise<string> {
     }
   }
 
+  // copy internal/collections from typescript-go (required by tsgolint, done by `just init`)
+  const collectionsDir = path.join(sourceDir, 'internal', 'collections')
+  const tsGoCollections = path.join(sourceDir, 'typescript-go', 'internal', 'collections')
+  if (!fs.existsSync(collectionsDir) && fs.existsSync(tsGoCollections)) {
+    fs.mkdirSync(collectionsDir, { recursive: true })
+    const files = fs.readdirSync(tsGoCollections).filter((f) => {
+      return f.endsWith('.go') && !f.endsWith('_test.go')
+    })
+    for (const file of files) {
+      fs.copyFileSync(path.join(tsGoCollections, file), path.join(collectionsDir, file))
+    }
+    console.log(`Copied ${files.length} collection files`)
+  }
+
   // write ready marker
   fs.writeFileSync(readyMarker, new Date().toISOString())
   console.log('tsgolint source ready')
