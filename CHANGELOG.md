@@ -1,3 +1,15 @@
+## 0.4.0
+
+1. **Simpler rule imports** — rules now import from `pkg/rule`, `pkg/utils`, etc. instead of `internal/rule`. The `internal/` child-module-path hack is gone. Your `.go` files use clean import paths:
+   ```go
+   import (
+       "github.com/typescript-eslint/tsgolint/pkg/rule"
+       "github.com/typescript-eslint/tsgolint/pkg/utils"
+   )
+   ```
+
+2. **Simpler codegen** — uses a tsgolint fork with `pkg/runner.Run()`, eliminating all regex surgery on main.go. The generated binary entry point is a 15-line template instead of a patched copy of tsgolint's main.go.
+
 ## 0.3.0
 
 1. **Only custom rules run by default** — previously the binary included all 44 built-in tsgolint rules, producing thousands of noisy errors. Now only your `.lintcn/` rules run. True shadcn model: explicitly add each rule you want.

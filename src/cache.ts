@@ -1,6 +1,6 @@
 // Manage cached tsgolint source and compiled binaries.
-// Downloads tsgolint + typescript-go as tarballs from GitHub (no git required),
-// applies patches with `patch -p1`, and copies internal/collections.
+// Downloads tsgolint fork + typescript-go as tarballs from GitHub,
+// applies tsgolint's patches to typescript-go, and copies collections.
 //
 // Cache layout:
 //   ~/.cache/lintcn/tsgolint/<version>/   — extracted source (read-only)
@@ -17,10 +17,11 @@ import { execAsync } from './exec.ts'
 // moves internal/ packages to pkg/ for clean external imports.
 export const DEFAULT_TSGOLINT_VERSION = 'a93604379da2631b70332a65bc47eb5ced689a3b'
 
-// Pinned typescript-go commit from remorses/typescript-go fork (lintcn-patched branch).
-// This is the pre-patched version — patches already applied, no git am needed.
+// Pinned typescript-go base commit from microsoft/typescript-go (before patches).
+// Patches from tsgolint/patches/ are applied on top during setup.
+// This is the upstream commit the tsgolint submodule was forked from.
 // Must be updated when DEFAULT_TSGOLINT_VERSION changes.
-const TYPESCRIPT_GO_COMMIT = 'e0345efd96fb3539c773558328a48c14a7f8edc4'
+const TYPESCRIPT_GO_COMMIT = '1b7eabe122e1575a0df9c77eccdf4e063c623224'
 
 export function getCacheDir(): string {
   return path.join(os.homedir(), '.cache', 'lintcn')
@@ -53,7 +54,6 @@ async function downloadAndExtract(url: string, targetDir: string): Promise<void>
 
   fs.mkdirSync(targetDir, { recursive: true })
 
-  // pipe through gunzip, then extract with tar (strip top-level directory)
   const tmpTarGz = path.join(os.tmpdir(), `lintcn-${Date.now()}.tar.gz`)
   const fileStream = fs.createWriteStream(tmpTarGz)
   // @ts-ignore ReadableStream vs NodeJS.ReadableStream mismatch
@@ -63,6 +63,20 @@ async function downloadAndExtract(url: string, targetDir: string): Promise<void>
   fs.rmSync(tmpTarGz, { force: true })
 }
 
+/** Apply git-format patches using `patch -p1` (no git required).
+ *  Patches are standard unified diff format, `patch` ignores the git metadata. */
+async function applyPatches(patchesDir: string, targetDir: string): Promise<number> {
+  const patches = fs.readdirSync(patchesDir)
+    .filter((f) => { return f.endsWith('.patch') })
+    .sort()
+
+  for (const patchFile of patches) {
+    const patchPath = path.join(patchesDir, patchFile)
+    await execAsync('patch', ['-p1', '--batch', '-i', patchPath], { cwd: targetDir })
+  }
+
+  return patches.length
+}
 
 export async function ensureTsgolintSource(version: string): Promise<string> {
   const sourceDir = getTsgolintSourceDir(version)
@@ -78,16 +92,25 @@ export async function ensureTsgolintSource(version: string): Promise<string> {
   }
 
   try {
-    // download tsgolint fork tarball (commit hash, not tag)
+    // download tsgolint fork tarball
     console.log(`Downloading tsgolint@${version.slice(0, 8)}...`)
     const tsgolintUrl = `https://github.com/remorses/tsgolint/archive/${version}.tar.gz`
     await downloadAndExtract(tsgolintUrl, sourceDir)
 
-    // download typescript-go from our fork (already patched, no git am needed)
+    // download typescript-go from microsoft (base commit before patches)
     const tsGoDir = path.join(sourceDir, 'typescript-go')
     console.log('Downloading typescript-go...')
-    const tsGoUrl = `https://github.com/remorses/typescript-go/archive/${TYPESCRIPT_GO_COMMIT}.tar.gz`
+    const tsGoUrl = `https://github.com/microsoft/typescript-go/archive/${TYPESCRIPT_GO_COMMIT}.tar.gz`
     await downloadAndExtract(tsGoUrl, tsGoDir)
+
+    // apply tsgolint's patches to typescript-go
+    const patchesDir = path.join(sourceDir, 'patches')
+    if (fs.existsSync(patchesDir)) {
+      const count = await applyPatches(patchesDir, tsGoDir)
+      if (count > 0) {
+        console.log(`Applied ${count} patches`)
+      }
+    }
 
     // copy internal/collections from typescript-go (required by tsgolint, done by `just init`)
     const collectionsDir = path.join(sourceDir, 'internal', 'collections')
