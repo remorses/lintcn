@@ -1,5 +1,5 @@
-// lintcn:source https://github.com/oxc-project/tsgolint/blob/main/internal/rules/await_thenable/await_thenable.go
-package lintcn
+// lintcn:source https://github.com/oxc-project/tsgolint/tree/main/internal/rules/await_thenable
+package await_thenable
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"

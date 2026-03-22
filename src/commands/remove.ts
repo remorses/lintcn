@@ -1,4 +1,4 @@
-// lintcn remove <name> — delete a rule and its test file from .lintcn/
+// lintcn remove <name> — delete a rule subfolder from .lintcn/
 
 import fs from 'node:fs'
 import path from 'node:path'
@@ -7,13 +7,11 @@ import { discoverRules } from '../discover.ts'
 
 export function removeRule(name: string): void {
   const lintcnDir = requireLintcnDir()
-
-  // match by lintcn:name metadata or by filename
   const rules = discoverRules(lintcnDir)
   const normalizedName = name.replace(/-/g, '_')
 
   const match = rules.find((r) => {
-    return r.name === name || r.fileName.replace(/\.go$/, '') === normalizedName
+    return r.name === name || r.packageName === normalizedName
   })
 
   if (!match) {
@@ -22,16 +20,8 @@ export function removeRule(name: string): void {
     )
   }
 
-  // delete rule file
-  const rulePath = path.join(lintcnDir, match.fileName)
-  fs.rmSync(rulePath)
-  console.log(`Removed ${match.fileName}`)
-
-  // delete test file if exists
-  const testFileName = match.fileName.replace(/\.go$/, '_test.go')
-  const testPath = path.join(lintcnDir, testFileName)
-  if (fs.existsSync(testPath)) {
-    fs.rmSync(testPath)
-    console.log(`Removed ${testFileName}`)
-  }
+  // Remove the entire subfolder
+  const ruleDir = path.join(lintcnDir, match.packageName)
+  fs.rmSync(ruleDir, { recursive: true })
+  console.log(`Removed ${match.packageName}/`)
 }

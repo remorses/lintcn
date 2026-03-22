@@ -1,5 +1,5 @@
-// lintcn:source https://github.com/oxc-project/tsgolint/blob/main/internal/rules/no_array_delete/no_array_delete.go
-package lintcn
+// lintcn:source https://github.com/oxc-project/tsgolint/tree/main/internal/rules/no_array_delete
+package no_array_delete
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"

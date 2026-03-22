@@ -1,7 +1,7 @@
 // lintcn:name no-redundant-type-assertion
 // lintcn:description Disallow redundant type assertions where the expression already has the asserted type or is a nullable union of it
 
-package lintcn
+package no_redundant_type_assertion
 
 import (
 	"fmt"

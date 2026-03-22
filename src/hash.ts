@@ -9,7 +9,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { execAsync } from './exec.ts'
 
-const CACHE_SCHEMA_VERSION = '2'
+const CACHE_SCHEMA_VERSION = '3'
 
 export async function computeContentHash({
   lintcnDir,
@@ -32,18 +32,22 @@ export async function computeContentHash({
     hash.update('go:unknown\n')
   }
 
-  // add all rule file contents in sorted order
-  const files = fs
-    .readdirSync(lintcnDir)
-    .filter((f) => {
-      return f.endsWith('.go')
-    })
-    .sort()
+  // walk rule subfolders for .go files in sorted order
+  const entries = fs.readdirSync(lintcnDir, { withFileTypes: true })
+    .filter((e) => { return e.isDirectory() && !e.name.startsWith('.') })
+    .sort((a, b) => { return a.name.localeCompare(b.name) })
 
-  for (const file of files) {
-    const content = fs.readFileSync(path.join(lintcnDir, file), 'utf-8')
-    hash.update(`file:${file}\n`)
-    hash.update(content)
+  for (const entry of entries) {
+    const subDir = path.join(lintcnDir, entry.name)
+    const goFiles = fs.readdirSync(subDir)
+      .filter((f) => { return f.endsWith('.go') })
+      .sort()
+
+    for (const file of goFiles) {
+      const content = fs.readFileSync(path.join(subDir, file), 'utf-8')
+      hash.update(`file:${entry.name}/${file}\n`)
+      hash.update(content)
+    }
   }
 
   return hash.digest('hex').slice(0, 16)

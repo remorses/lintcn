@@ -1,5 +1,5 @@
-// lintcn:source https://github.com/oxc-project/tsgolint/blob/main/internal/rules/no_floating_promises/no_floating_promises.go
-package lintcn
+// lintcn:source https://github.com/oxc-project/tsgolint/tree/main/internal/rules/no_floating_promises
+package no_floating_promises
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"

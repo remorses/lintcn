@@ -18,11 +18,11 @@ const packageJson = require('../package.json') as { version: string }
 const cli = goke('lintcn')
 
 cli
-  .command('add <url>', 'Add a rule by URL. Fetches the .go file and copies it into .lintcn/')
-  .example('# Add a rule from GitHub')
-  .example('lintcn add https://github.com/user/repo/blob/main/rules/no_floating_promises.go')
-  .example('# Add from raw URL')
-  .example('lintcn add https://raw.githubusercontent.com/user/repo/main/rules/no_unused_result.go')
+  .command('add <url>', 'Add a rule by GitHub URL. Fetches the whole folder into .lintcn/{rule}/')
+  .example('# Add a rule folder')
+  .example('lintcn add https://github.com/oxc-project/tsgolint/tree/main/internal/rules/no_floating_promises')
+  .example('# Add by file URL (auto-fetches the whole folder)')
+  .example('lintcn add https://github.com/oxc-project/tsgolint/blob/main/internal/rules/await_thenable/await_thenable.go')
   .action(async (url) => {
     await addRule(url)
   })

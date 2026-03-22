@@ -1,4 +1,4 @@
-package lintcn
+package no_floating_promises
 
 import (
 	"testing"

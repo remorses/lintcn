@@ -1,40 +1,95 @@
-// lintcn add <url> — fetch a .go rule file by URL and copy into .lintcn/
-// Also tries to fetch matching _test.go file from the same directory.
-// Normalizes GitHub blob URLs to raw URLs automatically.
+// lintcn add <url> — fetch a rule folder by URL and copy into .lintcn/{rule_name}/
+// Supports GitHub folder URLs (/tree/) and file URLs (/blob/).
+// For file URLs, auto-detects the parent folder and fetches all sibling files.
+// Uses GitHub API to list folder contents.
 
 import fs from 'node:fs'
 import path from 'node:path'
+import { execSync } from 'node:child_process'
 import { getLintcnDir } from '../paths.ts'
 import { generateEditorGoFiles } from '../codegen.ts'
 import { ensureTsgolintSource, DEFAULT_TSGOLINT_VERSION } from '../cache.ts'
 
-/** Convert GitHub blob URLs to raw.githubusercontent.com.
- *  Handles branch names containing slashes (e.g. feature/x) by splitting
- *  on /blob/ then finding the file path from the end (must end in .go). */
-function normalizeGithubUrl(url: string): string {
-  const blobSplit = url.match(/^(https?:\/\/github\.com\/[^/]+\/[^/]+)\/blob\/(.+)$/)
-  if (!blobSplit) {
-    return url
-  }
-
-  const [, repoUrl, refAndPath] = blobSplit
-  // repoUrl = "https://github.com/owner/repo"
-  // refAndPath = "feature/x/rules/my_rule.go" or "main/rules/my_rule.go"
-
-  // Extract owner/repo from repoUrl
-  const repoMatch = repoUrl.match(/github\.com\/([^/]+)\/([^/]+)$/)
-  if (!repoMatch) {
-    return url
-  }
-  const [, owner, repo] = repoMatch
-
-  // For raw.githubusercontent.com, the format is owner/repo/ref/path.
-  // We can pass refAndPath directly since GitHub resolves it.
-  return `https://raw.githubusercontent.com/${owner}/${repo}/${refAndPath}`
+interface ParsedGitHubUrl {
+  owner: string
+  repo: string
+  ref: string
+  /** Path to the directory containing the rule files */
+  dirPath: string
+  /** Set when URL points to a specific file (not a folder) */
+  fileName?: string
 }
 
-function deriveTestUrl(rawUrl: string): string {
-  return rawUrl.replace(/\.go$/, '_test.go')
+/** Parse GitHub blob/tree/raw URLs into components.
+ *  Ref is assumed to be the first path component after blob/tree —
+ *  branch names with slashes (e.g. feature/foo) are not supported. */
+function parseGitHubUrl(url: string): ParsedGitHubUrl | null {
+  // GitHub blob URLs: github.com/owner/repo/blob/ref/path/to/file.go
+  let match = url.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/blob\/([^/]+)\/(.+)$/)
+  if (match) {
+    const [, owner, repo, ref, filePath] = match
+    return { owner, repo, ref, dirPath: path.posix.dirname(filePath), fileName: path.posix.basename(filePath) }
+  }
+
+  // GitHub tree URLs: github.com/owner/repo/tree/ref/path/to/folder
+  match = url.match(/^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/tree\/([^/]+)\/(.+)$/)
+  if (match) {
+    const [, owner, repo, ref, dirPath] = match
+    return { owner, repo, ref, dirPath }
+  }
+
+  // raw.githubusercontent.com URLs
+  match = url.match(/^https?:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/)
+  if (match) {
+    const [, owner, repo, ref, filePath] = match
+    return { owner, repo, ref, dirPath: path.posix.dirname(filePath), fileName: path.posix.basename(filePath) }
+  }
+
+  return null
+}
+
+interface GitHubContentItem {
+  name: string
+  download_url: string | null
+  type: 'file' | 'dir'
+}
+
+/** Get a GitHub auth token from gh CLI, GITHUB_TOKEN env, or return undefined. */
+function getGitHubToken(): string | undefined {
+  if (process.env.GITHUB_TOKEN) {
+    return process.env.GITHUB_TOKEN
+  }
+  // Try gh CLI token (synchronous to keep it simple)
+  try {
+    return execSync('gh auth token', { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] }).trim() || undefined
+  } catch {
+    return undefined
+  }
+}
+
+/** List files in a GitHub directory via the Contents API. */
+async function listGitHubFolder(owner: string, repo: string, dirPath: string, ref: string): Promise<GitHubContentItem[]> {
+  const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${dirPath}?ref=${ref}`
+  const headers: Record<string, string> = {
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'lintcn',
+  }
+  const token = getGitHubToken()
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`
+  }
+  const response = await fetch(apiUrl, { headers })
+
+  if (!response.ok) {
+    throw new Error(`GitHub API error: ${response.status} ${response.statusText}\n  ${apiUrl}`)
+  }
+
+  const data = await response.json()
+  if (!Array.isArray(data)) {
+    throw new Error(`Expected a directory listing from GitHub API but got a single file.\n  ${apiUrl}`)
+  }
+
+  return data as GitHubContentItem[]
 }
 
 async function fetchFile(url: string): Promise<string> {
@@ -45,25 +100,11 @@ async function fetchFile(url: string): Promise<string> {
   return response.text()
 }
 
-async function tryFetchFile(url: string): Promise<string | null> {
-  try {
-    return await fetchFile(url)
-  } catch {
-    return null
-  }
-}
-
-function rewritePackageName(content: string): string {
-  // Rewrite first package declaration to package lintcn.
-  // Only matches before the first import or func to avoid touching comments.
-  return content.replace(/^package\s+\w+/m, 'package lintcn')
-}
-
 function ensureSourceComment(content: string, sourceUrl: string): string {
   if (content.includes('// lintcn:source')) {
     return content
   }
-  // Insert source comment after the first lintcn: comment block, or at the very top
+  // Insert source comment after any existing lintcn: comment block, or at the very top
   const lines = content.split('\n')
   let insertIndex = 0
   for (let i = 0; i < lines.length; i++) {
@@ -78,67 +119,76 @@ function ensureSourceComment(content: string, sourceUrl: string): string {
 }
 
 export async function addRule(url: string): Promise<void> {
-  const rawUrl = normalizeGithubUrl(url)
-
-  console.log(`Fetching ${rawUrl}...`)
-  const content = await fetchFile(rawUrl)
-
-  // validate it looks like a Go file with a rule
-  if (!content.includes('rule.Rule')) {
-    console.warn('Warning: no rule.Rule reference found in this file. Are you sure this is a tsgolint rule?')
+  const parsed = parseGitHubUrl(url)
+  if (!parsed) {
+    throw new Error(
+      'Only GitHub URLs are supported. Pass a /blob/ (file) or /tree/ (folder) URL.\n' +
+      'Example: lintcn add https://github.com/oxc-project/tsgolint/tree/main/internal/rules/no_floating_promises',
+    )
   }
 
-  // derive filename from URL
-  const urlPath = new URL(rawUrl).pathname
-  const fileName = path.basename(urlPath)
-  const baseName = fileName.replace(/\.go$/, '')
-  if (!fileName.endsWith('.go')) {
-    throw new Error(`URL must point to a .go file, got: ${fileName}`)
+  const { owner, repo, ref, dirPath } = parsed
+  const folderName = path.posix.basename(dirPath)
+
+  console.log(`Fetching ${owner}/${repo}/${dirPath}...`)
+  const items = await listGitHubFolder(owner, repo, dirPath, ref)
+
+  // Filter for .go and .json files
+  const filesToFetch = items.filter((item) => {
+    return item.type === 'file' && item.download_url && (item.name.endsWith('.go') || item.name.endsWith('.json'))
+  })
+
+  if (filesToFetch.length === 0) {
+    throw new Error(`No .go files found in ${dirPath}. Is this a rule folder?`)
+  }
+
+  // Warn if this doesn't look like a single-rule folder (too many main .go files)
+  const mainGoFiles = filesToFetch.filter((f) => {
+    return f.name.endsWith('.go') && !f.name.endsWith('_test.go') && f.name !== 'options.go'
+  })
+  if (mainGoFiles.length > 3) {
+    console.warn(
+      `Warning: folder has ${mainGoFiles.length} non-test .go files. ` +
+      `This may be a directory of multiple rules — consider using a more specific URL.`,
+    )
   }
 
   const lintcnDir = getLintcnDir()
-  fs.mkdirSync(lintcnDir, { recursive: true })
+  const ruleDir = path.join(lintcnDir, folderName)
 
-  // write the rule file
-  const filePath = path.join(lintcnDir, fileName)
-  if (fs.existsSync(filePath)) {
-    console.log(`Overwriting existing ${fileName}`)
+  // Clean existing rule folder if it exists
+  if (fs.existsSync(ruleDir)) {
+    fs.rmSync(ruleDir, { recursive: true })
+    console.log(`Overwriting existing ${folderName}/`)
   }
 
-  let processed = rewritePackageName(content)
-  processed = ensureSourceComment(processed, url)
-  fs.writeFileSync(filePath, processed)
-  console.log(`Added ${fileName}`)
+  fs.mkdirSync(ruleDir, { recursive: true })
 
-  // try to fetch companion files from the same directory:
-  // - _test.go (tests)
-  // - options.go (rule options struct, 31 of 50+ tsgolint rules have this)
-  const dirUrl = rawUrl.replace(/\/[^/]+$/, '')
-  const companionFiles = [
-    { url: deriveTestUrl(rawUrl), name: fileName.replace(/\.go$/, '_test.go') },
-    { url: `${dirUrl}/options.go`, name: `${baseName}_options.go` },
-  ]
-  for (const companion of companionFiles) {
-    const content = await tryFetchFile(companion.url)
-    if (content) {
-      const processed = rewritePackageName(content)
-      fs.writeFileSync(path.join(lintcnDir, companion.name), processed)
-      console.log(`Added ${companion.name}`)
+  // Fetch and write all files
+  for (const item of filesToFetch) {
+    let content = await fetchFile(item.download_url!)
+
+    // Add lintcn:source comment to the main rule file (same name as folder)
+    if (item.name === `${folderName}.go`) {
+      content = ensureSourceComment(content, url)
     }
+
+    fs.writeFileSync(path.join(ruleDir, item.name), content)
+    console.log(`  ${item.name}`)
   }
 
-  // ensure .tsgolint source is available and generate editor support files
+  console.log(`Added ${folderName}/ (${filesToFetch.length} files)`)
+
+  // Ensure tsgolint source is available
   const tsgolintDir = await ensureTsgolintSource(DEFAULT_TSGOLINT_VERSION)
 
-  // create .tsgolint symlink inside .lintcn for gopls.
-  // Use lstatSync to detect broken symlinks (existsSync returns false for broken links)
+  // Create/refresh .tsgolint symlink for gopls
   const tsgolintLink = path.join(lintcnDir, '.tsgolint')
   try {
     fs.lstatSync(tsgolintLink)
-    // exists (possibly broken) — remove and recreate
     fs.rmSync(tsgolintLink, { force: true })
   } catch {
-    // doesn't exist at all
+    // doesn't exist
   }
   fs.symlinkSync(tsgolintDir, tsgolintLink)
 

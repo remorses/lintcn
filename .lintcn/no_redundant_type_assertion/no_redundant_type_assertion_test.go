@@ -1,4 +1,4 @@
-package lintcn
+package no_redundant_type_assertion
 
 import (
 	"testing"

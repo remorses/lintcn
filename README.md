@@ -13,11 +13,11 @@ npm install -D lintcn
 ## Usage
 
 ```bash
-# Add a built-in tsgolint rule
-npx lintcn add https://github.com/oxc-project/tsgolint/blob/main/internal/rules/no_floating_promises/no_floating_promises.go
+# Add a rule folder from tsgolint
+npx lintcn add https://github.com/oxc-project/tsgolint/tree/main/internal/rules/no_floating_promises
 
-# Add a custom rule from any repo
-npx lintcn add https://github.com/remorses/lintcn/blob/main/rules/no_unhandled_error.go
+# Add by file URL (auto-fetches the whole folder)
+npx lintcn add https://github.com/oxc-project/tsgolint/blob/main/internal/rules/await_thenable/await_thenable.go
 
 # Lint your project
 npx lintcn lint
@@ -39,15 +39,22 @@ Browse all 50+ available built-in rules in the [tsgolint rules directory](https:
 
 ## How it works
 
-Rules live as `.go` files in `.lintcn/` at your project root. You own the source — edit, customize, delete.
+Each rule lives in its own subfolder under `.lintcn/`. You own the source — edit, customize, delete.
 
 ```
 my-project/
 ├── .lintcn/
-│   ├── .gitignore                      ← ignores generated Go files
-│   ├── no_floating_promises.go         ← your rule (committed)
-│   ├── no_floating_promises_test.go    ← its tests (committed)
-│   └── no_unhandled_error.go           ← another rule
+│   ├── .gitignore                          ← ignores generated Go files
+│   ├── no_floating_promises/
+│   │   ├── no_floating_promises.go         ← rule source (committed)
+│   │   ├── no_floating_promises_test.go    ← tests (committed)
+│   │   ├── options.go                      ← rule options struct
+│   │   └── schema.json                     ← options schema
+│   ├── await_thenable/
+│   │   ├── await_thenable.go
+│   │   └── await_thenable_test.go
+│   └── my_custom_rule/
+│       └── my_custom_rule.go
 ├── src/
 │   └── ...
 ├── tsconfig.json
@@ -56,7 +63,7 @@ my-project/
 
 When you run `npx lintcn lint`, the CLI:
 
-1. Scans `.lintcn/*.go` for rule definitions
+1. Scans `.lintcn/*/` subfolders for rule definitions
 2. Generates a Go workspace with your custom rules
 3. Compiles a custom binary (cached — rebuilds only when rules change)
 4. Runs the binary against your project
@@ -73,13 +80,15 @@ npx skills add remorses/lintcn
 
 This gives your AI agent the full tsgolint rule API reference — AST visitors, type checker, reporting, fixes, and testing patterns.
 
-Every rule is a Go file with `package lintcn` that exports a `rule.Rule` variable:
+Every rule lives in a subfolder under `.lintcn/` with the package name matching the folder:
 
 ```go
+// .lintcn/no_unhandled_error/no_unhandled_error.go
+
 // lintcn:name no-unhandled-error
 // lintcn:description Disallow discarding Error-typed return values
 
-package lintcn
+package no_unhandled_error
 
 import (
     "github.com/microsoft/typescript-go/shim/ast"

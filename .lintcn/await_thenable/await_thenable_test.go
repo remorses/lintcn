@@ -1,4 +1,4 @@
-package lintcn
+package await_thenable
 
 import (
 	"testing"

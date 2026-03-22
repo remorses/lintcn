@@ -1,4 +1,4 @@
-package lintcn
+package no_array_delete
 
 import (
 	"testing"

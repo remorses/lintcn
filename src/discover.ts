@@ -1,11 +1,12 @@
-// Scan .lintcn/*.go files for rule.Rule variables and lintcn: metadata comments.
+// Scan .lintcn/*/ subfolders for rule.Rule variables and lintcn: metadata comments.
+// Each subfolder is a Go package containing one rule with its companions.
 // Returns structured info about each discovered rule for codegen and list display.
 
 import fs from 'node:fs'
 import path from 'node:path'
 
 export interface RuleMetadata {
-  /** kebab-case rule name from // lintcn:name or derived from filename */
+  /** kebab-case rule name from // lintcn:name or derived from folder name */
   name: string
   /** one-line description from // lintcn:description */
   description: string
@@ -13,8 +14,8 @@ export interface RuleMetadata {
   source: string
   /** exported Go variable name like NoFloatingPromisesRule */
   varName: string
-  /** filename relative to .lintcn/ */
-  fileName: string
+  /** Go package name (= subfolder name, e.g. no_floating_promises) */
+  packageName: string
 }
 
 // Matches `var XxxRule = rule.Rule{` with optional leading whitespace
@@ -40,38 +41,46 @@ export function discoverRules(lintcnDir: string): RuleMetadata[] {
     return []
   }
 
-  const files = fs.readdirSync(lintcnDir).filter((f) => {
-    return f.endsWith('.go') && !f.endsWith('_test.go')
-  })
-
   const rules: RuleMetadata[] = []
+  const entries = fs.readdirSync(lintcnDir, { withFileTypes: true })
 
-  for (const fileName of files) {
-    const filePath = path.join(lintcnDir, fileName)
-    const content = fs.readFileSync(filePath, 'utf-8')
+  // Warn about flat .go files that should be in subfolders
+  const flatGoFiles = entries.filter((e) => {
+    return e.isFile() && e.name.endsWith('.go')
+  })
+  for (const file of flatGoFiles) {
+    const baseName = file.name.replace(/(_test)?\.go$/, '')
+    console.error(
+      `Error: ${file.name} is a flat file in .lintcn/ — rules must be in subfolders.\n` +
+      `  Move it to .lintcn/${baseName}/${file.name} and change the package to "${baseName}".\n`,
+    )
+  }
 
-    const varName = parseRuleVar(content)
-    if (!varName) {
-      // warn if file contains rule.Rule but we couldn't parse the var name
-      if (content.includes('rule.Rule')) {
-        console.warn(
-          `Warning: ${fileName} contains rule.Rule but no exported var was found. ` +
-          `Expected pattern: var XxxRule = rule.Rule{`,
-        )
-      }
-      continue
-    }
+  for (const entry of entries) {
+    if (!entry.isDirectory() || entry.name.startsWith('.')) continue
 
-    const meta = parseMetadata(content)
-    const baseName = fileName.replace(/\.go$/, '')
-
-    rules.push({
-      name: meta.name || baseName.replace(/_/g, '-'),
-      description: meta.description || '',
-      source: meta.source || '',
-      varName,
-      fileName,
+    const subDir = path.join(lintcnDir, entry.name)
+    const goFiles = fs.readdirSync(subDir).filter((f) => {
+      return f.endsWith('.go') && !f.endsWith('_test.go')
     })
+
+    for (const fileName of goFiles) {
+      const filePath = path.join(subDir, fileName)
+      const content = fs.readFileSync(filePath, 'utf-8')
+
+      const varName = parseRuleVar(content)
+      if (!varName) continue
+
+      const meta = parseMetadata(content)
+
+      rules.push({
+        name: meta.name || entry.name.replace(/_/g, '-'),
+        description: meta.description || '',
+        source: meta.source || '',
+        varName,
+        packageName: entry.name,
+      })
+    }
   }
 
   return rules
