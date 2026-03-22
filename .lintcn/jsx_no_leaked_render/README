@@ -1,0 +1,41 @@
+jsx-no-leaked-render
+
+Prevents falsy numeric values from leaking into JSX when using the && operator.
+
+Source: https://github.com/oxc-project/tsgolint/pull/556
+
+The Problem
+
+  {count && <Badge>{count}</Badge>}
+
+When count is 0, React renders the string "0" visibly in the DOM.
+When count is NaN, React renders "NaN". Both are bugs.
+
+What Gets Flagged
+
+  Type      Flagged   Reason
+  --------  -------   ------------------------------------------
+  number    yes       Could be 0 or NaN, which render visibly
+  bigint    yes       Could be 0n, which renders as "0"
+  any       yes       Could be any of the above
+  string    no        React 18+ treats "" as null (safe)
+  boolean   no        false is ignored by React
+  null      no        Ignored by React
+  undefined no        Ignored by React
+  object    no        Always truthy
+
+Safe Alternatives
+
+  {count > 0 && <Badge>{count}</Badge>}
+  {!!count && <Badge>{count}</Badge>}
+  {Boolean(count) && <Badge>{count}</Badge>}
+  {count ? <Badge>{count}</Badge> : null}
+
+Why Strings Are Not Flagged
+
+React 18+ changed empty string behavior: "" is now coalesced to null in the
+reconciler, creating no DOM text node. This was fixed in facebook/react#22807.
+Before React 18, empty strings created empty text nodes. Now they're safe.
+
+Non-zero number literals (1, 42, -1) are also not flagged since they're
+always truthy.

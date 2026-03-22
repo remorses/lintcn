@@ -1,0 +1,58 @@
+no-useless-coalescing
+
+Flags redundant nullish coalescing (??) and logical OR (||) expressions
+where the fallback can never be reached or doesn't change the result.
+
+Source: https://github.com/oxc-project/tsgolint/issues/703
+Implementation based on: https://github.com/oxc-project/tsgolint/pull/704
+
+What Gets Flagged
+
+1. Useless coalescing (dead fallback)
+
+   The left side can never trigger the fallback, so the right side is dead code.
+
+     const x: string = getString();
+     x || '';           // error: string is always string, '' is identity
+     x ?? 'fallback';   // error: string can never be nullish
+
+     const obj: { name: string } = getObj();
+     obj || undefined;  // error: object is always truthy
+
+2. Redundant undefined fallback
+
+   The expression already includes undefined in its type, so falling back
+   to undefined is a no-op.
+
+     declare const x: string | undefined;
+     x ?? undefined;    // error: x is already T | undefined
+     x || undefined;    // error: when x is undefined, || gives undefined anyway
+
+     declare const arr: string[] | undefined;
+     arr || undefined;  // error: same thing
+     arr || void 0;     // error: void 0 is undefined too
+
+3. Identity fallbacks
+
+   The fallback is the same falsy value the type already produces.
+
+     const s: string = getStr();
+     s || '';            // error: when s is '', || gives '' anyway
+
+     const b: boolean = getBool();
+     b || false;         // error: when b is false, || gives false anyway
+
+     const n: bigint = getBigInt();
+     n || 0n;            // error: when n is 0n, || gives 0n anyway
+
+What Is NOT Flagged
+
+  - Expressions with any, unknown, or type parameters (can't reason statically)
+  - x ?? null (different from undefined)
+  - x || 'default' where x could be nullish (the fallback changes behavior)
+  - x || undefined where x includes null (|| normalizes null to undefined)
+
+Auto-fix
+
+All diagnostics include an auto-fix that removes the operator and fallback
+expression, leaving just the left side.

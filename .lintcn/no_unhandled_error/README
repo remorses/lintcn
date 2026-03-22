@@ -1,0 +1,50 @@
+no-unhandled-error
+
+Disallow discarding expressions that are subtypes of Error. Enforces the
+errore pattern where errors are returned as values and must be checked.
+
+Source: custom rule, part of the errore convention (errore.org)
+
+The Problem
+
+When functions return Error | T unions (the errore pattern), callers must
+check the result with instanceof Error before using it. If the return value
+is discarded as a bare expression statement, the error is silently ignored.
+
+  declare function getUser(id: string): Error | User;
+
+  getUser("123");     // error: Error-typed return value is not handled
+
+  await fetchData();  // error: Promise<Error | Data> resolved but not checked
+
+What Gets Flagged
+
+  - Call expressions whose return type includes Error (or any Error subclass)
+    when the result is discarded as an expression statement
+  - Awaited calls where the resolved type includes Error
+  - Works with custom error subclasses (TypeError, NotFoundError, etc.)
+
+What Is NOT Flagged
+
+  - Assigning the result to a variable (you'll presumably check it)
+  - void operator (explicit discard: void getUser("123"))
+  - Functions returning void, undefined, or never
+  - Non-call expressions (bare identifiers, property accesses)
+  - Return statements (the caller handles it)
+  - console.log, arr.push, and other void-returning methods
+
+Correct Usage
+
+  // Assign and check
+  const user = getUser("123");
+  if (user instanceof Error) return user;
+
+  // Explicitly discard with void
+  void getUser("123");
+
+  // Use in return position
+  function wrapper() { return getUser("123"); }
+
+This rule pairs with the errore convention: return errors instead of throwing
+them. Functions return Error | T, callers narrow with instanceof. If you
+forget to check, this rule catches it at lint time.
