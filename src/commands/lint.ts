@@ -70,10 +70,23 @@ export async function buildBinary({
   fs.mkdirSync(binDir, { recursive: true })
   const binaryPath = getBinaryPath(contentHash)
 
-  console.log('Compiling custom tsgolint binary...')
-  await execAsync('go', ['build', '-o', binaryPath, './wrapper'], {
+  // Check if any lintcn binary has been built before — if not, this is a cold
+  // build that compiles the full tsgolint + typescript-go dependency tree.
+  const existingBins = fs.existsSync(binDir) ? fs.readdirSync(binDir) : []
+  if (existingBins.length === 0) {
+    console.log('Compiling custom tsgolint binary (first build — may take 30s+ to compile dependencies)...')
+    console.log('Subsequent builds will be fast (~1s). In CI, cache ~/.cache/lintcn/ and GOCACHE (run `go env GOCACHE`).')
+  } else {
+    console.log('Compiling custom tsgolint binary...')
+  }
+
+  const { exitCode: buildExitCode } = await execAsync('go', ['build', '-o', binaryPath, './wrapper'], {
     cwd: buildDir,
+    stdio: 'inherit',
   })
+  if (buildExitCode !== 0) {
+    throw new Error(`Go compilation failed (exit code ${buildExitCode})`)
+  }
 
   console.log('Build complete')
   return binaryPath
