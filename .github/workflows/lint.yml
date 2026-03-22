@@ -30,4 +30,4 @@ jobs:
             lintcn-${{ runner.os }}-${{ runner.arch }}-
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm lintcn lint
+      - run: pnpm exec lintcn lint
