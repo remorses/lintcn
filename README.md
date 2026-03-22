@@ -48,8 +48,7 @@ my-project/
 │   ├── no_floating_promises/
 │   │   ├── no_floating_promises.go         ← rule source (committed)
 │   │   ├── no_floating_promises_test.go    ← tests (committed)
-│   │   ├── options.go                      ← rule options struct
-│   │   └── schema.json                     ← options schema
+│   │   └── options.go                      ← rule options struct
 │   ├── await_thenable/
 │   │   ├── await_thenable.go
 │   │   └── await_thenable_test.go

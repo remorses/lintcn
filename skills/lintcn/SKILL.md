@@ -25,7 +25,6 @@ Each rule is a subfolder. The Go package name must match the folder name:
         no_floating_promises.go         ← rule source (committed)
         no_floating_promises_test.go    ← tests (committed)
         options.go                      ← rule options struct
-        schema.json                     ← options schema
     await_thenable/
         await_thenable.go
         await_thenable_test.go
