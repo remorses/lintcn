@@ -30,4 +30,5 @@ jobs:
             lintcn-${{ runner.os }}-${{ runner.arch }}-
 
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec lintcn lint
+      - run: pnpm build
+      - run: node dist/cli.js lint
