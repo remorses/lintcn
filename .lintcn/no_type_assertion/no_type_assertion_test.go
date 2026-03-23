@@ -29,6 +29,41 @@ var validCases = []rule_tester.ValidTestCase{
 	// type annotations (not assertions)
 	{Code: `function greet(name: string): void {}`},
 	{Code: `const arr: number[] = [1, 2, 3];`},
+
+	// --- from any source (allowed — standard way to narrow untyped APIs) ---
+	// simple any variable
+	{Code: `
+		declare const x: any;
+		const y = x as string;
+	`},
+	// any variable cast to interface
+	{Code: `
+		declare const x: any;
+		interface User { name: string; age: number; }
+		const y = x as User;
+	`},
+	// function returning any
+	{Code: `
+		declare function getJson(): any;
+		const data = getJson() as { name: string };
+	`},
+	// async function returning Promise<any> (the response.json() pattern)
+	{Code: `
+		declare function fetchJson(): Promise<any>;
+		async function main() {
+			const data = (await fetchJson()) as { default_branch: string };
+		}
+	`},
+	// any cast to union
+	{Code: `
+		declare const x: any;
+		const y = x as string | number;
+	`},
+	// any cast to array
+	{Code: `
+		declare const x: any;
+		const y = x as string[];
+	`},
 }
 
 var invalidCases = []rule_tester.InvalidTestCase{
@@ -82,17 +117,7 @@ var invalidCases = []rule_tester.InvalidTestCase{
 			{MessageId: "typeAssertion"},
 		},
 	},
-	// from any source
-	{
-		Code: `
-			declare const x: any;
-			const y = x as string;
-		`,
-		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "typeAssertionFromAny"},
-		},
-	},
-	// from unknown source
+	// from unknown source (still warns — unknown requires narrowing, not casting)
 	{
 		Code: `
 			declare const x: unknown;

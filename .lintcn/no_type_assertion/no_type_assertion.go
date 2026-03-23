@@ -242,6 +242,14 @@ var NoTypeAssertionRule = rule.Rule{
 			// e.g. (x as unknown) as User → show "string" not "unknown"
 			if utils.IsTypeAnyType(expressionType) || utils.IsTypeUnknownType(expressionType) {
 				originalType := unwrapAssertionChain(ctx, expression)
+
+				// If the source is genuinely `any` (not part of a chain like
+				// `x as any as Foo`), skip — casting from any to a concrete type
+				// is the standard way to use untyped APIs (e.g. response.json()).
+				if utils.IsTypeAnyType(expressionType) && originalType == nil {
+					return
+				}
+
 				if originalType != nil {
 					originalStr := formatType(ctx.TypeChecker, ctx.Program, originalType)
 					ctx.ReportNode(node, rule.RuleMessage{
