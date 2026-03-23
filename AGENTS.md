@@ -4,8 +4,17 @@
 
 lintcn uses `remorses/tsgolint` (forked from `oxc-project/tsgolint`).
 
-The fork adds 1 commit: `internal/runner/runner.go` with `Run(rules, args)`.
-Zero modifications to existing files. Upstream merges should never conflict.
+The fork adds on top of upstream:
+1. `internal/runner/runner.go` — new file with `Run(rules, args)` entry point
+2. `internal/rule_tester/snapshot.go` — added `TSGOLINT_SNAPSHOT_CWD` env var.
+   When `TSGOLINT_SNAPSHOT_CWD=true`, snapshots are stored relative to
+   `os.Getwd()` (the test package directory) instead of relative to snapshot.go.
+   Default behavior is unchanged — tsgolint's own snapshots stay in
+   `internal/rule_tester/__snapshots__/`.
+
+User rules must set `TSGOLINT_SNAPSHOT_CWD=true` when running `go test` so
+snapshots land in `.lintcn/<rule>/__snapshots__/` instead of the cached
+tsgolint source directory.
 
 User rules import from `internal/rule`, `internal/utils` etc. — same paths
 as tsgolint's own code. The Go workspace allows this because the user module

@@ -1,0 +1,90 @@
+
+[TestNoUnhandledError/invalid-0 - 1]
+Diagnostic 1: noUnhandledError (3:6 - 3:19)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   2 |                     declare function getUser(id: string): Error | { name: string };
+   3 |                     getUser("id");
+     |                     ~~~~~~~~~~~~~~
+   4 |                 
+---
+
+[TestNoUnhandledError/invalid-1 - 1]
+Diagnostic 1: noUnhandledError (3:6 - 3:29)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   2 |                     declare function fetchData(url: string): Promise<Error | string>;
+   3 |                     await fetchData("/api");
+     |                     ~~~~~~~~~~~~~~~~~~~~~~~~
+   4 |                 
+---
+
+[TestNoUnhandledError/invalid-2 - 1]
+Diagnostic 1: noUnhandledError (3:6 - 3:16)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   2 |                     declare function validate(): Error | null;
+   3 |                     validate();
+     |                     ~~~~~~~~~~~
+   4 |                 
+---
+
+[TestNoUnhandledError/invalid-3 - 1]
+Diagnostic 1: noUnhandledError (3:6 - 3:13)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   2 |                     declare function check(): Error;
+   3 |                     check();
+     |                     ~~~~~~~~
+   4 |                 
+---
+
+[TestNoUnhandledError/invalid-4 - 1]
+Diagnostic 1: noUnhandledError (6:6 - 6:17)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   5 |                     declare function find(id: string): NotFoundError | { data: string };
+   6 |                     find("123");
+     |                     ~~~~~~~~~~~~
+   7 |                 
+---
+
+[TestNoUnhandledError/invalid-5 - 1]
+Diagnostic 1: noUnhandledError (3:6 - 3:18)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   2 |                     declare function parse(input: string): TypeError | { value: number };
+   3 |                     parse("abc");
+     |                     ~~~~~~~~~~~~~
+   4 |                 
+---
+
+[TestNoUnhandledError/invalid-6 - 1]
+Diagnostic 1: noUnhandledError (3:6 - 3:18)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   2 |                     declare function tryConnect(): Error | undefined;
+   3 |                     tryConnect();
+     |                     ~~~~~~~~~~~~~
+   4 |                 
+---
+
+[TestNoUnhandledError/invalid-7 - 1]
+Diagnostic 1: noUnhandledError (5:6 - 5:13)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   4 |                     safe();
+   5 |                     risky();
+     |                     ~~~~~~~~
+   6 |                 
+---
+
+[TestNoUnhandledError/invalid-8 - 1]
+Diagnostic 1: noUnhandledError (3:6 - 3:26)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   2 |                     declare const db: { query(sql: string): Error | { rows: any[] } };
+   3 |                     db.query("SELECT 1");
+     |                     ~~~~~~~~~~~~~~~~~~~~~
+   4 |                 
+---
+
+[TestNoUnhandledError/invalid-9 - 1]
+Diagnostic 1: noUnhandledError (3:6 - 3:21)
+Message: Error-typed return value is not handled. Check with `instanceof Error` or assign to a variable.
+   2 |                     declare function getUser(id: string): Error | { name: string };
+   3 |                     (getUser("id"));
+     |                     ~~~~~~~~~~~~~~~~
+   4 |                 
+---
