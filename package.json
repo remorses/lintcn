@@ -29,6 +29,7 @@
   ],
   "scripts": {
     "build": "rm -rf dist *.tsbuildinfo && tsc && chmod +x dist/cli.js",
+    "cli": "tsx src/cli",
     "prepublishOnly": "pnpm build"
   },
   "keywords": [
