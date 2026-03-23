@@ -1,3 +1,59 @@
+## 0.7.0
+
+1. **`lintcn lint --fix`** — automatically apply fixes in-place. Collects diagnostics per file, applies fixes via the Go runner, and only reports what couldn't be auto-fixed:
+
+   ```bash
+   lintcn lint --fix
+   ```
+
+2. **Warning severity system** — rules can now declare `// lintcn:severity warn`. Warnings don't fail CI (exit 0) and are filtered to git-changed files by default so they don't flood large codebases:
+
+   ```go
+   // lintcn:severity warn
+   ```
+
+   Two new flags:
+   - `--all-warnings` — show warnings for all files, not just changed ones
+   - `lintcn list` now shows a `(warn)` suffix on warning-severity rules
+
+3. **New rule: `no-type-assertion` (warn)** — flags every `as X` / `<X>expr` and includes the actual expression type so agents know what they're working with:
+
+   ```
+   warning: Type assertion to `User ({ name: string; age: number })` from `unknown`
+   ```
+
+   User-defined types show their structural form in parentheses. Standard library types (Array, Map, Promise, etc.) are not expanded. Assertion chains (`x as unknown as Foo`) walk back to the original source type. Casting from `any` is silently allowed (standard untyped-API pattern).
+
+4. **New rule: `no-in-operator` (warn)** — warns on every `in` expression and shows the expanded type of the right-hand operand. When the right side is a union and the property exists in some members but not others, it names which members have it and suggests using a discriminant property instead:
+
+   ```
+   warning: Avoid the `in` operator on `Cat | Dog`. Property `meow` exists in Cat but not Dog.
+   Consider using a discriminant property (e.g. `kind`) instead of `in`.
+   ```
+
+5. **New rule: `no-redundant-in-check` (error)** — flags `"y" in x` when the type already has `y` as a required non-optional property in all union members. The check can never be false — it's dead code:
+
+   ```ts
+   interface User { name: string; age: number }
+   if ('name' in user) { ... }  // error: redundant — User always has 'name'
+   ```
+
+6. **New built-in rules**: `jsx-no-leaked-render`, `no-unhandled-error`, `no-useless-coalescing` — available via `lintcn add` or by pointing at the `.lintcn/` folder URL.
+
+7. **`lintcn add` with whole repo URL** — download all rules from a repo's `.lintcn/` folder in one shot. Merge semantics: remote rule folders overwrite local ones; local-only rules are preserved:
+
+   ```bash
+   # bare repo URL — fetches all rules from .lintcn/ at repo root
+   lintcn add https://github.com/remorses/lintcn
+
+   # tree URL pointing at a .lintcn collection
+   lintcn add https://github.com/remorses/lintcn/tree/main/.lintcn
+   ```
+
+8. **Fixed `await-thenable` false positive on overloaded functions** — when a function has multiple call signatures (overloads or intersection-of-callable-types), the rule now checks if any overload returns a thenable before reporting. Fixes false positives like `await extract({...})` from the `tar` package.
+
+9. **Brighter error underline** — error highlights changed from ANSI 256-color 160 (muted red) to 196 (pure bright red). Run `lintcn clean` to clear the old cached binary.
+
 ## 0.6.0
 
 1. **Rules now live in subfolders** — each rule is its own Go package under `.lintcn/{rule_name}/`, replacing the old flat `.lintcn/*.go` layout. This eliminates the need to rename `options.go` and `schema.json` companions — they stay in the subfolder with their original names, and the Go package name matches the folder. `lintcn add` now fetches the entire rule folder automatically.

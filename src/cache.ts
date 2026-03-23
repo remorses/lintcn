@@ -90,7 +90,7 @@ async function downloadAndExtract(url: string, targetDir: string): Promise<void>
 
     // extract with npm tar package (cross-platform, no shell tar needed)
     fs.mkdirSync(targetDir, { recursive: true })
-    extract({
+    await extract({
       file: tmpTarGz,
       cwd: targetDir,
       strip: 1,
