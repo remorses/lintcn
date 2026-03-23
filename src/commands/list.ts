@@ -20,10 +20,13 @@ export function listRules(): void {
 
   console.log('Installed rules:\n')
 
-  const maxNameLen = Math.max(...rules.map((r) => { return r.name.length }))
+  const maxNameLen = Math.max(...rules.map((r) => {
+    return r.name.length + (r.severity === 'warn' ? 7 : 0) // ' (warn)' = 7 chars
+  }))
 
   for (const rule of rules) {
-    const name = rule.name.padEnd(maxNameLen + 2)
+    const suffix = rule.severity === 'warn' ? ' (warn)' : ''
+    const name = (rule.name + suffix).padEnd(maxNameLen + 2)
     const desc = rule.description || '(no description)'
     console.log(`  ${name}${desc}`)
   }

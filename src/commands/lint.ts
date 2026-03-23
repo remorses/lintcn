@@ -2,9 +2,10 @@
 // Handles Go workspace generation, compilation with caching, and execution.
 
 import fs from 'node:fs'
+import path from 'node:path'
 import { spawn } from 'node:child_process'
 import { requireLintcnDir } from '../paths.ts'
-import { discoverRules } from '../discover.ts'
+import { discoverRules, type RuleMetadata } from '../discover.ts'
 import { generateBuildWorkspace, generateEditorGoFiles } from '../codegen.ts'
 import { ensureTsgolintSource, validateVersion, cachedBinaryExists, getBinaryPath, getBuildDir, getBinDir } from '../cache.ts'
 import { computeContentHash } from '../hash.ts'
@@ -99,16 +100,36 @@ export async function lint({
   rebuild,
   tsgolintVersion,
   passthroughArgs,
+  allWarnings,
 }: {
   rebuild: boolean
   tsgolintVersion: string
   passthroughArgs: string[]
+  allWarnings: boolean
 }): Promise<number> {
   const binaryPath = await buildBinary({ rebuild, tsgolintVersion })
 
-  // run the binary with passthrough args, inheriting stdio
+  // Discover rules to inject --warn flags for warning-severity rules.
+  // buildBinary already discovered rules for compilation, but we need the
+  // metadata here to know which rules are warnings at runtime.
+  const lintcnDir = requireLintcnDir()
+  const rules = discoverRules(lintcnDir)
+  const warnArgs = buildWarnArgs(rules)
+
+  // By default, limit warnings to git-changed files so they don't flood
+  // the output in large codebases. --all-warnings bypasses this filter.
+  const hasWarnRules = rules.some((r) => r.severity === 'warn')
+  let warnFileArgs: string[] = []
+  if (hasWarnRules && allWarnings) {
+    warnFileArgs = ['--all-warnings']
+  } else if (hasWarnRules) {
+    warnFileArgs = await buildWarnFileArgs()
+  }
+
+  // run the binary with --warn + --warn-file/--all-warnings flags + passthrough args
+  const allArgs = [...warnArgs, ...warnFileArgs, ...passthroughArgs]
   return new Promise((resolve) => {
-    const proc = spawn(binaryPath, passthroughArgs, {
+    const proc = spawn(binaryPath, allArgs, {
       stdio: 'inherit',
     })
 
@@ -121,4 +142,60 @@ export async function lint({
       resolve(code ?? 1)
     })
   })
+}
+
+/** Build --warn flags for rules with severity 'warn'.
+ *  Uses goRuleName (parsed from Go source) to match the runtime name
+ *  that tsgolint uses in diagnostics, avoiding silent mismatches. */
+function buildWarnArgs(rules: RuleMetadata[]): string[] {
+  const args: string[] = []
+  for (const rule of rules) {
+    if (rule.severity === 'warn') {
+      args.push('--warn', rule.goRuleName)
+    }
+  }
+  return args
+}
+
+/** Get git-changed files and build --warn-file flags so warnings only
+ *  appear for new/modified code. Returns [] if git is unavailable or not
+ *  a git repo — the runner will then show no warnings (safe default).
+ *  Linting must never crash from this. */
+async function buildWarnFileArgs(): Promise<string[]> {
+  try {
+    // Get git repo root to resolve relative paths to absolute.
+    const topLevelResult = await execAsync('git', ['rev-parse', '--show-toplevel'], { stdio: 'pipe' }).catch(() => null)
+    if (!topLevelResult) return []
+    const repoRoot = topLevelResult.stdout.trim()
+
+    // Changed files (staged + unstaged vs HEAD)
+    const diffResult = await execAsync('git', ['diff', '--name-only', 'HEAD'], { stdio: 'pipe' }).catch(() => null)
+    // Untracked files (new files not yet committed)
+    const untrackedResult = await execAsync('git', ['ls-files', '--others', '--exclude-standard'], { stdio: 'pipe' }).catch(() => null)
+
+    const files = new Set<string>()
+
+    for (const result of [diffResult, untrackedResult]) {
+      if (!result) continue
+      for (const line of result.stdout.split('\n')) {
+        const trimmed = line.trim()
+        if (trimmed) {
+          // Resolve to absolute path so it matches SourceFile.FileName() in the runner.
+          files.add(path.resolve(repoRoot, trimmed))
+        }
+      }
+    }
+
+    // No changed files → no --warn-file flags → runner shows no warnings (clean tree)
+    if (files.size === 0) return []
+
+    const args: string[] = []
+    for (const file of files) {
+      args.push('--warn-file', file)
+    }
+    return args
+  } catch {
+    // git not installed, not a repo, or any other failure — no warnings shown
+    return []
+  }
 }

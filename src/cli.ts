@@ -46,6 +46,7 @@ cli
   .option('--fix', 'Automatically fix violations')
   .option('--tsconfig <path>', 'Path to tsconfig.json')
   .option('--list-files', 'List matched files')
+  .option('--all-warnings', 'Show warnings for all files, not just git-changed ones')
   .option('--tsgolint-version [version]', 'Override the pinned tsgolint version (tag or commit). For testing unreleased tsgolint versions.')
   .action(async (options) => {
     const tsgolintVersion = (options.tsgolintVersion as string) || DEFAULT_TSGOLINT_VERSION
@@ -68,6 +69,7 @@ cli
       rebuild: !!options.rebuild,
       tsgolintVersion,
       passthroughArgs,
+      allWarnings: !!options.allWarnings,
     })
     process.exit(exitCode)
   })
