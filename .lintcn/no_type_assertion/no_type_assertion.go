@@ -1,6 +1,10 @@
 // lintcn:name no-type-assertion
 // lintcn:severity warn
 // lintcn:description Flag all type assertions (as X) and show the actual expression type so agents can remove them
+//
+// Safety: every checker API call is guarded against nil returns.
+// expandTypeStructure skips nil slice elements. unwrapAssertionChain
+// has a 64-step cap to prevent infinite loops on malformed AST.
 
 package no_type_assertion
 
@@ -15,12 +19,25 @@ import (
 	"github.com/typescript-eslint/tsgolint/internal/utils"
 )
 
+// safeTypeString converts a type to string, returning "unknown" if the
+// checker or type is nil. Prevents panics from nil *Type in TypeToString.
+func safeTypeString(c *checker.Checker, t *checker.Type) string {
+	if c == nil || t == nil {
+		return "unknown"
+	}
+	return c.TypeToString(t)
+}
+
 // formatType returns a type string, appending the expanded structural form
 // in parentheses when it differs from the alias name. For example:
 //
 //	"User" → "User ({ name: string; age: number; })"
 //	"string" → "string" (no expansion, already concrete)
 func formatType(c *checker.Checker, program *compiler.Program, t *checker.Type) string {
+	if c == nil || t == nil {
+		return "unknown"
+	}
+
 	name := c.TypeToString(t)
 
 	// Don't try to expand any/unknown/never — meaningless
@@ -31,14 +48,20 @@ func formatType(c *checker.Checker, program *compiler.Program, t *checker.Type) 
 		return name
 	}
 
-	// For union types, expand each part individually
+	// For union types, expand each part individually.
+	// Cap depth implicitly: UnionTypeParts on a non-union returns [t],
+	// so recursion only goes 1 level deep (parts are never unions themselves).
 	parts := utils.UnionTypeParts(t)
 	if len(parts) > 1 {
 		anyExpanded := false
 		expandedParts := make([]string, len(parts))
 		for i, part := range parts {
+			if part == nil {
+				expandedParts[i] = "unknown"
+				continue
+			}
 			expandedParts[i] = formatType(c, program, part)
-			if expandedParts[i] != c.TypeToString(part) {
+			if expandedParts[i] != safeTypeString(c, part) {
 				anyExpanded = true
 			}
 		}
@@ -62,6 +85,10 @@ func formatType(c *checker.Checker, program *compiler.Program, t *checker.Type) 
 // Returns "" when the type can't be meaningfully expanded (primitives,
 // already-structural types, etc.)
 func expandTypeStructure(c *checker.Checker, program *compiler.Program, t *checker.Type) string {
+	if c == nil || t == nil {
+		return ""
+	}
+
 	// Only expand object-like types (interfaces, type aliases, classes)
 	if !utils.IsObjectType(t) {
 		return ""
@@ -69,7 +96,7 @@ func expandTypeStructure(c *checker.Checker, program *compiler.Program, t *check
 
 	// Skip built-in library types (Array, Map, Promise, Error, etc.)
 	// Their structural expansion is just noise (dozens of methods).
-	if t.Symbol() != nil && utils.IsSymbolFromDefaultLibrary(program, t.Symbol()) {
+	if program != nil && t.Symbol() != nil && utils.IsSymbolFromDefaultLibrary(program, t.Symbol()) {
 		return ""
 	}
 
@@ -93,8 +120,11 @@ func expandTypeStructure(c *checker.Checker, program *compiler.Program, t *check
 
 	// Index signatures: [key: string]: number
 	for _, idx := range indexInfos {
-		keyStr := c.TypeToString(idx.KeyType())
-		valStr := c.TypeToString(idx.ValueType())
+		if idx == nil {
+			continue
+		}
+		keyStr := safeTypeString(c, idx.KeyType())
+		valStr := safeTypeString(c, idx.ValueType())
 		if idx.IsReadonly() {
 			parts = append(parts, fmt.Sprintf("readonly [key: %s]: %s", keyStr, valStr))
 		} else {
@@ -104,21 +134,31 @@ func expandTypeStructure(c *checker.Checker, program *compiler.Program, t *check
 
 	// Call signatures: (...args) => return
 	for _, sig := range callSigs {
+		if sig == nil {
+			continue
+		}
 		retType := checker.Checker_getReturnTypeOfSignature(c, sig)
-		retStr := c.TypeToString(retType)
+		retStr := safeTypeString(c, retType)
 		params := checker.Signature_parameters(sig)
 		paramParts := make([]string, len(params))
 		for i, p := range params {
+			if p == nil {
+				paramParts[i] = "arg: unknown"
+				continue
+			}
 			pType := checker.Checker_getTypeOfSymbol(c, p)
-			paramParts[i] = fmt.Sprintf("%s: %s", p.Name, c.TypeToString(pType))
+			paramParts[i] = fmt.Sprintf("%s: %s", p.Name, safeTypeString(c, pType))
 		}
 		parts = append(parts, fmt.Sprintf("(%s) => %s", strings.Join(paramParts, ", "), retStr))
 	}
 
 	// Properties: name: type
 	for _, prop := range props {
+		if prop == nil {
+			continue
+		}
 		propType := checker.Checker_getTypeOfSymbol(c, prop)
-		propStr := c.TypeToString(propType)
+		propStr := safeTypeString(c, propType)
 		optional := ""
 		if prop.Flags&ast.SymbolFlagsOptional != 0 {
 			optional = "?"
@@ -131,21 +171,38 @@ func expandTypeStructure(c *checker.Checker, program *compiler.Program, t *check
 
 // unwrapAssertionChain walks back through nested as-expressions to find the
 // original expression type before any as-casts. Returns nil if the innermost
-// expression is also any/unknown (nothing useful to show).
-//
-//	(x as unknown) as User → returns type of x
-//	(x as unknown as any) as User → returns type of x
-//	x as User → returns nil (x is not an as-expression)
+// expression is also any/unknown (nothing useful to show), or if no chain
+// was found. Capped at 64 steps to prevent infinite loops on malformed AST.
 func unwrapAssertionChain(ctx rule.RuleContext, expr *ast.Node) *checker.Type {
+	if expr == nil {
+		return nil
+	}
 	inner := ast.SkipParentheses(expr)
-	for inner.Kind == ast.KindAsExpression || inner.Kind == ast.KindTypeAssertionExpression {
-		inner = ast.SkipParentheses(inner.Expression())
+	if inner == nil {
+		return nil
+	}
+	start := inner
+	for steps := 0; steps < 64; steps++ {
+		if inner.Kind != ast.KindAsExpression && inner.Kind != ast.KindTypeAssertionExpression {
+			break
+		}
+		next := inner.Expression()
+		if next == nil {
+			break
+		}
+		inner = ast.SkipParentheses(next)
+		if inner == nil {
+			break
+		}
 	}
 	// If we didn't unwrap anything, there's no chain
-	if inner == ast.SkipParentheses(expr) {
+	if inner == start {
 		return nil
 	}
 	t := ctx.TypeChecker.GetTypeAtLocation(inner)
+	if t == nil {
+		return nil
+	}
 	// If the original is also any/unknown, nothing useful to show
 	if utils.IsTypeAnyType(t) || utils.IsTypeUnknownType(t) {
 		return nil
@@ -157,6 +214,10 @@ var NoTypeAssertionRule = rule.Rule{
 	Name: "no-type-assertion",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
 		checkAssertion := func(node *ast.Node) {
+			if node == nil {
+				return
+			}
+
 			// Skip `as const` — these are value assertions, not type assertions
 			if ast.IsConstAssertion(node) {
 				return
@@ -164,9 +225,15 @@ var NoTypeAssertionRule = rule.Rule{
 
 			expression := node.Expression()
 			typeAnnotation := node.Type()
+			if expression == nil || typeAnnotation == nil {
+				return
+			}
 
 			expressionType := ctx.TypeChecker.GetTypeAtLocation(expression)
 			assertedType := ctx.TypeChecker.GetTypeAtLocation(typeAnnotation)
+			if expressionType == nil || assertedType == nil {
+				return
+			}
 
 			assertedStr := formatType(ctx.TypeChecker, ctx.Program, assertedType)
 
@@ -181,7 +248,7 @@ var NoTypeAssertionRule = rule.Rule{
 						Id: "typeAssertionFromAny",
 						Description: fmt.Sprintf(
 							"Type assertion `as %s` from `%s`. The original expression type is `%s`. Consider narrowing the type instead.",
-							assertedStr, ctx.TypeChecker.TypeToString(expressionType), originalStr,
+							assertedStr, safeTypeString(ctx.TypeChecker, expressionType), originalStr,
 						),
 					})
 				} else {
@@ -189,7 +256,7 @@ var NoTypeAssertionRule = rule.Rule{
 						Id: "typeAssertionFromAny",
 						Description: fmt.Sprintf(
 							"Type assertion `as %s` from `%s`. Consider adding a type annotation at the source instead.",
-							assertedStr, ctx.TypeChecker.TypeToString(expressionType),
+							assertedStr, safeTypeString(ctx.TypeChecker, expressionType),
 						),
 					})
 				}
@@ -204,7 +271,7 @@ var NoTypeAssertionRule = rule.Rule{
 					Id: "typeAssertionRedundant",
 					Description: fmt.Sprintf(
 						"Type assertion `as %s` is redundant, the expression already has this type. Remove the assertion.",
-						ctx.TypeChecker.TypeToString(assertedType),
+						safeTypeString(ctx.TypeChecker, assertedType),
 					),
 				})
 				return
