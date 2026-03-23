@@ -3,10 +3,34 @@ package await_thenable
 
 import (
 	"github.com/microsoft/typescript-go/shim/ast"
+	"github.com/microsoft/typescript-go/shim/checker"
 	"github.com/microsoft/typescript-go/shim/scanner"
 	"github.com/typescript-eslint/tsgolint/internal/rule"
 	"github.com/typescript-eslint/tsgolint/internal/utils"
 )
+
+// anyOverloadReturnsThenable checks if a call expression's callee has any
+// overload signature that returns a thenable type. This suppresses false
+// positives when the type checker resolves to the wrong overload (common
+// with intersection-typed functions like tar's extract).
+func anyOverloadReturnsThenable(ctx rule.RuleContext, node *ast.Node) bool {
+	expr := ast.SkipParentheses(node)
+	if !ast.IsCallExpression(expr) {
+		return false
+	}
+	callee := expr.AsCallExpression().Expression
+	calleeType := ctx.TypeChecker.GetTypeAtLocation(callee)
+	if calleeType == nil {
+		return false
+	}
+	for _, sig := range checker.Checker_getSignaturesOfType(ctx.TypeChecker, calleeType, checker.SignatureKindCall) {
+		retType := checker.Checker_getReturnTypeOfSignature(ctx.TypeChecker, sig)
+		if retType != nil && utils.IsThenableType(ctx.TypeChecker, node, retType) {
+			return true
+		}
+	}
+	return false
+}
 
 func buildAwaitMessage() rule.RuleMessage {
 	return rule.RuleMessage{
@@ -62,8 +86,13 @@ var AwaitThenableRule = rule.Rule{
 				}
 				certainty := utils.NeedsToBeAwaited(ctx.TypeChecker, awaitArgument, awaitArgumentType)
 
-				if certainty == utils.TypeAwaitableNever {
-					awaitTokenRange := scanner.GetRangeOfTokenAtPosition(ctx.SourceFile, node.Pos())
+			if certainty == utils.TypeAwaitableNever {
+				// Skip if any overload of the called function returns a thenable.
+				// The type checker may have resolved to the wrong overload.
+				if anyOverloadReturnsThenable(ctx, awaitArgument) {
+					return
+				}
+				awaitTokenRange := scanner.GetRangeOfTokenAtPosition(ctx.SourceFile, node.Pos())
 					ctx.ReportRangeWithSuggestions(awaitTokenRange, buildAwaitMessage(), func() []rule.RuleSuggestion {
 						return []rule.RuleSuggestion{{
 							Message: buildRemoveAwaitMessage(),

@@ -298,6 +298,29 @@ class C<R extends unknown> {
   }
 }
       `},
+		// Function overloads: one overload returns Promise, another returns non-thenable.
+		// The await should NOT be flagged because a valid overload returns a thenable.
+		{Code: `
+declare function overloaded(opt: { file: string }): Promise<void>;
+declare function overloaded(opt: { stream: true }): void;
+async function test() {
+  await overloaded({ file: 'test' });
+}
+    `},
+		// Intersection of callable types (like tar's TarCommand pattern).
+		// One callable group returns a stream, another returns Promise<void>.
+		{Code: `
+type StreamCommand = {
+  (opt: {}): { pipe: Function };
+};
+type FileCommand = {
+  (opt: { file: string }): Promise<void>;
+};
+declare const extract: StreamCommand & FileCommand;
+async function test() {
+  await extract({ file: 'test.tar.gz' });
+}
+    `},
 	}, []rule_tester.InvalidTestCase{
 		{
 			Code: "await 0;",
