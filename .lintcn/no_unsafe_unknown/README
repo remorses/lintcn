@@ -1,0 +1,51 @@
+no-unsafe-unknown
+
+Warns when `unknown` is used in function parameter types or type assertions.
+
+Source: custom rule for lintcn
+Severity: warn (does not block CI)
+
+The Problem
+
+Agents often reach for `unknown` when they hit TypeScript friction instead of
+reading the real types. In function arguments, that usually means the code is
+giving up on the contract the function should actually enforce. In assertions,
+it usually means the code is trying to force a conversion the type system does
+not support.
+
+What Gets Flagged
+
+  function run(input: unknown) {}
+  const fn = (input: Promise<unknown>) => input
+  const value = input as unknown
+  const result = (value as unknown) as Target
+
+What The Warning Tells The Agent
+
+  - For function parameters: read the real dependency and value types, then use
+    the correct parameter type instead of routing everything through `unknown`
+  - For assertions: stop forcing the conversion, read the actual source and
+    target types, then narrow or transform the value properly
+
+What Is Not Flagged
+
+  - `unknown` outside function parameter types and assertions
+  - ordinary typed parameters
+  - assertions that do not involve `unknown`
+  - `as const`
+
+Preferred Alternatives
+
+  // Instead of this
+  function run(input: unknown) {}
+
+  // Read the real contract and type it directly
+  function run(input: RequestContext) {}
+
+  // Instead of this
+  const result = value as unknown as User
+
+  // Narrow or validate first
+  if (isUser(value)) {
+    const result = value
+  }

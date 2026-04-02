@@ -1,0 +1,82 @@
+
+[TestNoUnsafeUnknown/invalid-0 - 1]
+Diagnostic 1: unknownFunctionParameter (1:21 - 1:27)
+Message: Function parameter `input` uses `unknown`. Using `unknown` in function arguments to get around TypeScript errors is a code smell. Read the real dependency and value types, and type the parameter correctly instead of silencing the checker with generic helpers or wrappers.
+   1 | function run(input: unknown) { return input }
+     |                     ~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-1 - 1]
+Diagnostic 1: unknownFunctionParameter (1:21 - 1:29)
+Message: Function parameter `input` contains `unknown` in `unknown[]`. Using `unknown` in function arguments to get around TypeScript errors is a code smell. Read the real dependency and value types, and type the parameter correctly instead of silencing the checker with generic helpers or wrappers.
+   1 | const run = (input: unknown[]) => input.length
+     |                     ~~~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-2 - 1]
+Diagnostic 1: unknownFunctionParameter (1:21 - 1:36)
+Message: Function parameter `input` contains `unknown` in `Promise<unknown>`. Using `unknown` in function arguments to get around TypeScript errors is a code smell. Read the real dependency and value types, and type the parameter correctly instead of silencing the checker with generic helpers or wrappers.
+   1 | function run(input: Promise<unknown>) { return input }
+     |                     ~~~~~~~~~~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-3 - 1]
+Diagnostic 1: unknownFunctionParameter (1:28 - 1:34)
+Message: Function parameter `input` uses `unknown`. Using `unknown` in function arguments to get around TypeScript errors is a code smell. Read the real dependency and value types, and type the parameter correctly instead of silencing the checker with generic helpers or wrappers.
+   1 | class Service { run(input: unknown) { return input } }
+     |                            ~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-4 - 1]
+Diagnostic 1: unknownFunctionParameter (1:53 - 1:59)
+Message: Function parameter `input` uses `unknown`. Using `unknown` in function arguments to get around TypeScript errors is a code smell. Read the real dependency and value types, and type the parameter correctly instead of silencing the checker with generic helpers or wrappers.
+   1 | class Service { constructor(private readonly input: unknown) {} }
+     |                                                     ~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-5 - 1]
+Diagnostic 1: unknownFunctionParameter (1:50 - 1:56)
+Message: Function parameter `input` uses `unknown`. Using `unknown` in function arguments to get around TypeScript errors is a code smell. Read the real dependency and value types, and type the parameter correctly instead of silencing the checker with generic helpers or wrappers.
+   1 | declare function map<T, U>(value: T, fn: (input: unknown) => U): U;
+     |                                                  ~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-6 - 1]
+Diagnostic 1: unknownAssertion (1:15 - 1:30)
+Message: Type assertion to `unknown` uses `unknown`. This is usually a forced conversion hiding a real type mismatch. Read the actual source and target types, then narrow or transform the value instead of laundering it through `unknown`.
+   1 | const value = input as unknown;
+     |               ~~~~~~~~~~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-7 - 1]
+Diagnostic 1: unknownAssertion (1:15 - 1:39)
+Message: Type assertion to `Promise<unknown>` uses `unknown`. This is usually a forced conversion hiding a real type mismatch. Read the actual source and target types, then narrow or transform the value instead of laundering it through `unknown`.
+   1 | const value = input as Promise<unknown>;
+     |               ~~~~~~~~~~~~~~~~~~~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-8 - 1]
+Diagnostic 1: unknownAssertion (1:15 - 1:28)
+Message: Type assertion to `unknown` uses `unknown`. This is usually a forced conversion hiding a real type mismatch. Read the actual source and target types, then narrow or transform the value instead of laundering it through `unknown`.
+   1 | const value = <unknown>input;
+     |               ~~~~~~~~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-9 - 1]
+Diagnostic 1: unknownAssertionFromUnknown (1:46 - 1:60)
+Message: Type assertion to `string` from `unknown`. This usually means the code is trying to force an incompatible conversion. Narrow the value with real runtime checks or fix the source types instead of forcing it through `unknown`.
+   1 | declare const value: unknown; const result = value as string;
+     |                                              ~~~~~~~~~~~~~~~
+---
+
+[TestNoUnsafeUnknown/invalid-10 - 1]
+Diagnostic 1: unknownAssertionFromUnknown (1:53 - 1:93)
+Message: Type assertion to `Map<string, number>` from `unknown`. The original expression type is `{ id: string; }`. Using `unknown` in an assertion to force a different type is a serious code smell. Read the real types and narrow or transform the value instead.
+   1 | declare const value: { id: string }; const result = (value as unknown) as Map<string, number>;
+     |                                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Diagnostic 2: unknownAssertion (1:54 - 1:69)
+Message: Type assertion to `unknown` uses `unknown`. This is usually a forced conversion hiding a real type mismatch. Read the actual source and target types, then narrow or transform the value instead of laundering it through `unknown`.
+   1 | declare const value: { id: string }; const result = (value as unknown) as Map<string, number>;
+     |                                                      ~~~~~~~~~~~~~~~~
+---
