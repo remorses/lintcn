@@ -1,0 +1,70 @@
+no-tiny-wrapper-function
+
+Warns on tiny functions and methods that are three or fewer executable lines
+and contain another function call.
+
+Source: custom rule for lintcn
+Severity: warn (does not block CI)
+
+The goal is to stop agents from creating tiny wrapper abstractions when they
+should inline the call directly at the usage site instead.
+
+The Problem
+
+These helpers often do not add meaningful behavior. They just rename a call and
+make the codebase more indirect:
+
+  export function createTestStore(): ConversationStore {
+    return new ConversationStore(createMemoryRedis())
+  }
+
+  const save = (file: string) => write(file)
+
+  class Repo {
+    persist(value: string) {
+      return write(value)
+    }
+  }
+
+What Gets Flagged
+
+- Functions with `<= 3` non-empty executable lines
+- Methods with `<= 3` non-empty executable lines
+- Bodies that contain a function call
+
+This includes short wrappers such as:
+
+  function persist(value: string) {
+    const normalized = normalize(value)
+    write(normalized)
+    return normalized
+  }
+
+What Is Allowed
+
+Short functions and methods are allowed when they only contain expressions and
+do not call other functions:
+
+  function sum(a: number, b: number) {
+    return a + b
+  }
+
+  const getName = (user: { name: string }) => user.name
+
+  class Counter {
+    next() {
+      return this.value + 1
+    }
+  }
+
+Example Warning Messages
+
+Function example:
+
+  This function is only 1 line of code and contains a function call. Inline the
+  call directly instead of creating a wrapper function.
+
+Method example:
+
+  This method is only 1 line of code and contains a function call. Inline the
+  call directly instead of creating a wrapper function.
