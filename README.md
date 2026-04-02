@@ -22,6 +22,9 @@ npx lintcn add https://github.com/oxc-project/tsgolint/blob/main/internal/rules/
 # Lint your project
 npx lintcn lint
 
+# Show warning rules for all files, not just updated/added files
+npx lintcn lint --all-warnings
+
 # Lint with a specific tsconfig
 npx lintcn lint --tsconfig tsconfig.build.json
 
@@ -156,9 +159,9 @@ void getUser("id");
 Rules can be configured as **warnings** instead of errors:
 
 - **Don't fail CI** — warnings produce exit code 0
-- **Only shown for git-changed files** — warnings for unchanged files are silently skipped
+- **Only shown for updated/added files by default** — warning rules are limited to files in `git diff` plus untracked files, so unchanged files are silently skipped
 
-This lets you adopt new rules gradually. In a large codebase, enabling a rule as an error means hundreds of violations at once. As a warning, you only see violations in files you're actively changing — fixing issues in new code without blocking the build.
+This lets you adopt new rules gradually. In a large codebase, enabling a rule as an error means hundreds of violations at once. As a warning, you only see violations in files you're actively changing or adding — fixing issues in new code without blocking the build.
 
 ### Configuring a rule as a warning
 
@@ -174,29 +177,30 @@ Rules without `// lintcn:severity` default to `error`.
 
 ### When warnings are shown
 
-By default, `lintcn lint` runs `git diff` to find changed and untracked files. Warnings are only printed for files in that list:
+By default, `lintcn lint` runs `git diff` to find updated files and also includes untracked files you just added. Warning rules are only printed for files in that set:
 
 ```bash
-# Warnings only for files in git diff (default)
+# Warnings only for updated files plus newly added untracked files (default)
 npx lintcn lint
 
 # Warnings for ALL files, ignoring git diff
 npx lintcn lint --all-warnings
 ```
 
-| Scenario                           | Warnings shown?   |
-| ---------------------------------- | ----------------- |
-| File is in `git diff` or untracked | Yes               |
-| File is committed and unchanged    | No                |
-| `--all-warnings` flag is passed    | Yes, all files    |
-| Git is not installed or not a repo | No warnings shown |
-| Clean git tree (no changes)        | No warnings shown |
+| Scenario                                  | Warnings shown?   |
+| ----------------------------------------- | ----------------- |
+| File is updated in `git diff`             | Yes               |
+| File is newly added and untracked         | Yes               |
+| File is committed and unchanged           | No                |
+| `--all-warnings` flag is passed           | Yes, all files    |
+| Git is not installed or not a repo        | No warnings shown |
+| Clean git tree (no changes, no new files) | No warnings shown |
 
 ### Workflow
 
 1. Add a new rule with `lintcn add`
 2. Set it to `// lintcn:severity warn` in the Go source
-3. Run `lintcn lint` — only see warnings in files you're currently editing
+3. Run `lintcn lint` — only see warnings in files you're currently editing or adding
 4. Fix warnings as you touch files naturally
 5. Once the codebase is clean, change to `// lintcn:severity error` (or remove the directive) to enforce it
 

@@ -1,0 +1,41 @@
+
+[TestNoTinyWrapperFunction/invalid-0 - 1]
+Diagnostic 1: tinyWrapper (6:20 - 6:34)
+Message: This function is only 1 line of code and contains a function call. Inline the call directly instead of creating a wrapper function.
+   5 |             }
+   6 |             export function createTestStore(): ConversationStore {
+     |                             ~~~~~~~~~~~~~~~
+   7 |                 return new ConversationStore(createMemoryRedis());
+---
+
+[TestNoTinyWrapperFunction/invalid-1 - 1]
+Diagnostic 1: tinyWrapper (1:58 - 1:86)
+Message: This function is only 1 line of code and contains a function call. Inline the call directly instead of creating a wrapper function.
+   1 | declare function write(file: string): void; const save = (file: string) => write(file);
+     |                                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+---
+
+[TestNoTinyWrapperFunction/invalid-2 - 1]
+Diagnostic 1: tinyWrapper (1:14 - 1:20)
+Message: This method is only 1 line of code and contains a function call. Inline the call directly instead of creating a wrapper function.
+   1 | class Repo { persist(value: string) { return write(value) } } declare function write(value: string): string;
+     |              ~~~~~~~
+---
+
+[TestNoTinyWrapperFunction/invalid-3 - 1]
+Diagnostic 1: tinyWrapper (4:13 - 4:19)
+Message: This function is only 3 lines of code and contains a function call. Inline the call directly instead of creating a wrapper function.
+   3 |             declare function write(value: string): void;
+   4 |             function persist(value: string) {
+     |                      ~~~~~~~
+   5 |                 const normalized = normalize(value);
+---
+
+[TestNoTinyWrapperFunction/invalid-4 - 1]
+Diagnostic 1: tinyWrapper (4:11 - 4:17)
+Message: This method is only 1 line of code and contains a function call. Inline the call directly instead of creating a wrapper function.
+   3 |             class Service {
+   4 |                 async persist(value: string) {
+     |                       ~~~~~~~
+   5 |                     return await write(value);
+---
