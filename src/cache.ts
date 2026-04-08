@@ -18,12 +18,12 @@ import { execAsync } from './exec.ts'
 // Pinned tsgolint fork commit — updated with each lintcn release.
 // Uses remorses/tsgolint fork which adds internal/runner.Run() and
 // TSGOLINT_SNAPSHOT_CWD env var for cwd-relative test snapshots.
-export const DEFAULT_TSGOLINT_VERSION = '518fa0d395effb07a45070643a0cb1a9cf202ce9'
+export const DEFAULT_TSGOLINT_VERSION = '3e0f31dc057a7ce403e6c56a458ecdb4fe7c0f1b'
 
 // Pinned typescript-go base commit from microsoft/typescript-go (before patches).
 // Patches from tsgolint/patches/ are applied on top during setup.
 // Must be updated when DEFAULT_TSGOLINT_VERSION changes.
-const TYPESCRIPT_GO_COMMIT = '1b7eabe122e1575a0df9c77eccdf4e063c623224'
+const TYPESCRIPT_GO_COMMIT = 'c0703e66b68b826eedadce353d63fe9f4ea21fb6'
 
 // Strict pattern for version strings — prevents path traversal via ../
 const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/

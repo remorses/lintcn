@@ -52,5 +52,3 @@ export async function computeContentHash({
   const full = hash.digest('hex')
   return { short: full.slice(0, 16), full }
 }
-
-
