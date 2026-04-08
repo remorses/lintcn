@@ -1,0 +1,86 @@
+
+[TestNoRedundantTypeAssertion/invalid-0 - 1]
+Diagnostic 1: redundantAssertion (3:11 - 3:21)
+Message: Type assertion to 'string' is redundant because the expression already has that type. Remove the assertion.
+   2 | declare const x: string;
+   3 | const y = x as string;
+     |           ~~~~~~~~~~~
+   4 |       
+---
+
+[TestNoRedundantTypeAssertion/invalid-1 - 1]
+Diagnostic 1: redundantAssertion (3:11 - 3:21)
+Message: Type assertion to 'number' is redundant because the expression already has that type. Remove the assertion.
+   2 | declare const x: number;
+   3 | const y = x as number;
+     |           ~~~~~~~~~~~
+   4 |       
+---
+
+[TestNoRedundantTypeAssertion/invalid-2 - 1]
+Diagnostic 1: redundantAssertion (3:11 - 3:22)
+Message: Type assertion to 'boolean' is redundant because the expression already has that type. Remove the assertion.
+   2 | declare const x: boolean;
+   3 | const y = x as boolean;
+     |           ~~~~~~~~~~~~
+   4 |       
+---
+
+[TestNoRedundantTypeAssertion/invalid-3 - 1]
+Diagnostic 1: redundantAssertion (3:11 - 3:31)
+Message: Type assertion to 'string' is redundant because the expression already has that type. Remove the assertion.
+   2 | declare function getString(): string;
+   3 | const y = getString() as string;
+     |           ~~~~~~~~~~~~~~~~~~~~~
+   4 |       
+---
+
+[TestNoRedundantTypeAssertion/invalid-4 - 1]
+Diagnostic 1: useNonNullAssertion (3:11 - 3:21)
+Message: Use a `!` non-null assertion or a type guard to narrow away undefined instead of `as string`.
+   2 | declare const x: string | undefined;
+   3 | const y = x as string;
+     |           ~~~~~~~~~~~
+   4 |       
+  Suggestion 1: [replaceWithNonNull] Replace with `!` non-null assertion.
+---
+
+[TestNoRedundantTypeAssertion/invalid-5 - 1]
+Diagnostic 1: useNonNullAssertion (3:11 - 3:21)
+Message: Use a `!` non-null assertion or a type guard to narrow away null instead of `as string`.
+   2 | declare const x: string | null;
+   3 | const y = x as string;
+     |           ~~~~~~~~~~~
+   4 |       
+  Suggestion 1: [replaceWithNonNull] Replace with `!` non-null assertion.
+---
+
+[TestNoRedundantTypeAssertion/invalid-6 - 1]
+Diagnostic 1: useNonNullAssertion (3:11 - 3:21)
+Message: Use a `!` non-null assertion or a type guard to narrow away null | undefined instead of `as string`.
+   2 | declare const x: string | null | undefined;
+   3 | const y = x as string;
+     |           ~~~~~~~~~~~
+   4 |       
+  Suggestion 1: [replaceWithNonNull] Replace with `!` non-null assertion.
+---
+
+[TestNoRedundantTypeAssertion/invalid-7 - 1]
+Diagnostic 1: useNonNullAssertion (4:11 - 4:22)
+Message: Use a `!` non-null assertion or a type guard to narrow away undefined instead of `as User`.
+   3 | declare const user: User | undefined;
+   4 | const u = user as User;
+     |           ~~~~~~~~~~~~
+   5 |       
+  Suggestion 1: [replaceWithNonNull] Replace with `!` non-null assertion.
+---
+
+[TestNoRedundantTypeAssertion/invalid-8 - 1]
+Diagnostic 1: useNonNullAssertion (3:11 - 3:21)
+Message: Use a `!` non-null assertion or a type guard to narrow away null instead of `as number`.
+   2 | declare const x: number | null;
+   3 | const y = x as number;
+     |           ~~~~~~~~~~~
+   4 |       
+  Suggestion 1: [replaceWithNonNull] Replace with `!` non-null assertion.
+---

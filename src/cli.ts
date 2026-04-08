@@ -26,22 +26,16 @@ cli
   .example('lintcn add https://github.com/oxc-project/tsgolint/blob/main/internal/rules/await_thenable/await_thenable.go')
   .example('# Add all rules from a repo (downloads .lintcn/ folder)')
   .example('lintcn add https://github.com/someone/their-project')
-  .action(async (url) => {
-    await addRule(url)
-  })
+  .action(addRule)
 
 cli
   .command('remove <name>', 'Remove an installed rule from .lintcn/')
   .example('lintcn remove no-floating-promises')
-  .action((name) => {
-    removeRule(name)
-  })
+  .action(removeRule)
 
 cli
   .command('list', 'List all installed rules')
-  .action(() => {
-    listRules()
-  })
+  .action(listRules)
 
 cli
   .command('lint', 'Build custom tsgolint binary and run it against the project')
@@ -93,9 +87,7 @@ cli
 
 cli
   .command('clean', 'Remove cached tsgolint source and compiled binaries to free disk space')
-  .action(() => {
-    clean()
-  })
+  .action(clean)
 
 cli.help()
 cli.version(packageJson.version)

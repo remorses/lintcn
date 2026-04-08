@@ -1,0 +1,21 @@
+
+[TestNoUnusedTopLevelFunction/invalid-0 - 1]
+Diagnostic 1: unusedTopLevelFunction (1:10 - 1:15)
+Message: Top-level function `orphan` has 0 callers in this program. Inline it at the use site, delete it, or split the logic into a clearer abstraction.
+   1 | function orphan() { return 1 }
+     |          ~~~~~~
+---
+
+[TestNoUnusedTopLevelFunction/invalid-1 - 1]
+Diagnostic 1: unusedTopLevelFunction (1:10 - 1:15)
+Message: Top-level function `helper` has 0 callers in this program. Inline it at the use site, delete it, or split the logic into a clearer abstraction.
+   1 | function helper() { return 1 }
+     |          ~~~~~~
+---
+
+[TestNoUnusedTopLevelFunction/invalid-2 - 1]
+Diagnostic 1: unusedTopLevelFunction (1:10 - 1:13)
+Message: Top-level function `loop` has 0 callers in this program. Inline it at the use site, delete it, or split the logic into a clearer abstraction.
+   1 | function loop(value: number): number { if (value <= 0) return 0; return loop(value - 1) }
+     |          ~~~~
+---

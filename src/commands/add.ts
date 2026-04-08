@@ -75,6 +75,26 @@ interface GitHubContentItem {
   type: 'file' | 'dir'
 }
 
+type GitHubContentItemCandidate = {
+  name?: string | null
+  download_url?: string | null
+  type?: string | null
+} | null
+
+function isGitHubContentItem(value: GitHubContentItemCandidate): value is GitHubContentItem {
+  if (!value) {
+    return false
+  }
+
+  const name = value.name
+  const downloadUrl = value.download_url
+  const itemType = value.type
+
+  return typeof name === 'string'
+    && (downloadUrl === null || typeof downloadUrl === 'string')
+    && (itemType === 'file' || itemType === 'dir')
+}
+
 /** Get a GitHub auth token from gh CLI, GITHUB_TOKEN env, or return undefined. */
 function getGitHubToken(): string | undefined {
   if (process.env.GITHUB_TOKEN) {
@@ -134,7 +154,11 @@ async function listGitHubFolder(owner: string, repo: string, dirPath: string, re
     throw new Error(`Expected a directory listing from GitHub API but got a single file.\n  ${apiUrl}`)
   }
 
-  return data as GitHubContentItem[]
+  if (!data.every(isGitHubContentItem)) {
+    throw new Error(`Unexpected GitHub directory listing shape.\n  ${apiUrl}`)
+  }
+
+  return data
 }
 
 async function fetchFile(url: string): Promise<string> {
