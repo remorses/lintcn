@@ -1,0 +1,23 @@
+
+[TestNoSingleUseTopLevelFunction/invalid-0 - 1]
+Diagnostic 1: singleUseTopLevelFunction (1:10 - 1:15)
+Message: Function `helper` is only called once in this program and is 1 lines long. Inline it at the call site instead of creating extra cognitive overhead.
+   1 | function helper() { return 1 } const value = helper()
+     |          ~~~~~~
+---
+
+[TestNoSingleUseTopLevelFunction/invalid-1 - 1]
+Diagnostic 1: singleUseTopLevelFunction (16:13 - 16:30)
+Message: Function `getRootBuildOutDir` is only called once in this program and is 5 lines long. Inline it at the call site instead of creating extra cognitive overhead.
+  15 | 
+  16 |             function getRootBuildOutDir(userConfig: UserConfig): string {
+     |                      ~~~~~~~~~~~~~~~~~~
+  17 |                 return userConfig.build?.outDir ?? 'dist'
+
+Diagnostic 2: singleUseTopLevelFunction (20:13 - 20:40)
+Message: Function `getDefaultEnvironmentOutDirs` is only called once in this program and is 9 lines long. Inline it at the call site instead of creating extra cognitive overhead.
+  19 | 
+  20 |             function getDefaultEnvironmentOutDirs(rootOutDir: string, isCloudflare: boolean) {
+     |                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  21 |                 return {
+---
