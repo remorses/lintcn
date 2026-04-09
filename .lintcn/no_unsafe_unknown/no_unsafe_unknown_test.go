@@ -25,6 +25,7 @@ var validCases = []rule_tester.ValidTestCase{
 	{Code: `declare const value: unknown; const copy = value;`},
 	{Code: `function parse(): unknown { return undefined }`},
 	{Code: `const value = input as string;`},
+	{Code: `declare const value: unknown; const result = value as { id: string };`},
 	{Code: `const value = { a: 1 } as const;`},
 	{Code: `function wrap<T>(value: T) { return value }`},
 }

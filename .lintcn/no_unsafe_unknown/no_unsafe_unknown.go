@@ -72,6 +72,10 @@ func unwrapAssertionChain(ctx rule.RuleContext, expr *ast.Node) *checker.Type {
 	return t
 }
 
+func isAllowedUnknownAssertionTarget(node *ast.Node) bool {
+	return node != nil && node.Kind == ast.KindTypeLiteral
+}
+
 func parameterName(param *ast.ParameterDeclaration) string {
 	if param == nil {
 		return "parameter"
@@ -171,6 +175,9 @@ var NoUnsafeUnknownRule = rule.Rule{
 
 			expressionType := ctx.TypeChecker.GetTypeAtLocation(expression)
 			if expressionType == nil || !utils.IsTypeUnknownType(expressionType) {
+				return
+			}
+			if isAllowedUnknownAssertionTarget(typeAnnotation) {
 				return
 			}
 
