@@ -73,6 +73,17 @@ func TestJsxNoLeakedRender(t *testing.T) {
 			// Inferred const with truthy value — literal type 1
 			{Code: `const t = 1; <div>{t && <span/>}</div>`, Tsx: true},
 
+			// Current noisy cases: callback-ish or ReactNode-ish values typed as any.
+			{Code: `
+				declare const resolvedIcon: any
+				const Icon = () => <span />
+				<div>{resolvedIcon && <Icon />}</div>
+			`, Tsx: true},
+			{Code: `
+				declare const children: any
+				<div>{children && <section />}</div>
+			`, Tsx: true},
+
 			// Known limitation: nested && inside ternary not flagged (only checks direct JSX parent)
 			{Code: `declare const n: number; <div>{true ? (n && <span/>) : null}</div>`, Tsx: true},
 		},

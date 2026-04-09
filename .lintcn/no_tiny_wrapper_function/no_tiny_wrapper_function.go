@@ -132,6 +132,54 @@ func forwardsDirectlyToAnotherCall(node *ast.Node) bool {
 	}
 }
 
+func isNamedObjectLiteralContext(node *ast.Node) bool {
+	if node == nil || node.Parent == nil {
+		return false
+	}
+
+	parent := node.Parent
+	switch {
+	case ast.IsVariableDeclaration(parent):
+		return parent.Initializer() == node
+	case ast.IsPropertyDeclaration(parent):
+		return parent.Initializer() == node
+	case ast.IsExportAssignment(parent):
+		return parent.Expression() == node
+	case ast.IsBinaryExpression(parent):
+		bin := parent.AsBinaryExpression()
+		return bin != nil && bin.OperatorToken != nil && bin.OperatorToken.Kind == ast.KindEqualsToken && bin.Right == node && ast.IsAssignmentTarget(bin.Left)
+	default:
+		return false
+	}
+}
+
+func shouldCheckFunctionExpressionLike(node *ast.Node) bool {
+	if node == nil || node.Parent == nil {
+		return false
+	}
+
+	parent := node.Parent
+	switch {
+	case ast.IsVariableDeclaration(parent):
+		return parent.Initializer() == node
+	case ast.IsPropertyDeclaration(parent):
+		return parent.Initializer() == node
+	case ast.IsExportAssignment(parent):
+		return parent.Expression() == node
+	case ast.IsBinaryExpression(parent):
+		bin := parent.AsBinaryExpression()
+		return bin != nil && bin.OperatorToken != nil && bin.OperatorToken.Kind == ast.KindEqualsToken && bin.Right == node && ast.IsAssignmentTarget(bin.Left)
+	case ast.IsPropertyAssignment(parent):
+		property := parent.AsPropertyAssignment()
+		if property == nil || property.Initializer != node || parent.Parent == nil || parent.Parent.Kind != ast.KindObjectLiteralExpression {
+			return false
+		}
+		return isNamedObjectLiteralContext(parent.Parent)
+	default:
+		return false
+	}
+}
+
 func checkTinyWrapper(ctx rule.RuleContext, node *ast.Node, kind string) {
 	wrappedExpr, ok := getWrappedExpression(node)
 	if !ok || !forwardsDirectlyToAnotherCall(wrappedExpr) {
@@ -156,9 +204,15 @@ var NoTinyWrapperFunctionRule = rule.Rule{
 				checkTinyWrapper(ctx, node, "function")
 			},
 			ast.KindFunctionExpression: func(node *ast.Node) {
+				if !shouldCheckFunctionExpressionLike(node) {
+					return
+				}
 				checkTinyWrapper(ctx, node, "function")
 			},
 			ast.KindArrowFunction: func(node *ast.Node) {
+				if !shouldCheckFunctionExpressionLike(node) {
+					return
+				}
 				checkTinyWrapper(ctx, node, "function")
 			},
 			ast.KindMethodDeclaration: func(node *ast.Node) {

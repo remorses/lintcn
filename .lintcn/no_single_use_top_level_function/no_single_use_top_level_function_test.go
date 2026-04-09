@@ -42,6 +42,32 @@ var validCases = []rule_tester.ValidTestCase{
 	{Code: `function helper() { return 1 } const alias = helper; alias();`},
 	{
 		Code: `
+			const TOAST_SESSION_ID_REGEX = /\[session:([^\]]+)\]$/
+
+			function extractToastSessionId(message: string): string | undefined {
+				const match = message.match(TOAST_SESSION_ID_REGEX)
+				if (!match) {
+					return undefined
+				}
+				return match[1]
+			}
+
+			const sessionId = extractToastSessionId('hello [session:abc]')
+		`,
+	},
+	{
+		Code: `
+			const TOAST_SESSION_ID_REGEX = /\[session:[^\]]+\]$/
+
+			function stripToastSessionId(message: string): string {
+				return message.replace(TOAST_SESSION_ID_REGEX, '').trimEnd()
+			}
+
+			const cleanMessage = stripToastSessionId('hello [session:abc]')
+		`,
+	},
+	{
+		Code: `
 			function verboseHelper(input: number) {
 				const a = input + 1
 				const b = a + 1

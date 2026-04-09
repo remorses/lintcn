@@ -30,6 +30,60 @@ var validCases = []rule_tester.ValidTestCase{
 	{Code: `declare function write(value: string): string; function persist(user: { name: string }) { return write(user.name) }`},
 	{Code: `declare function createMemoryRedis(): { url: string }; class ConversationStore { constructor(redis: { url: string }) {} } export function createTestStore(): ConversationStore { return new ConversationStore(createMemoryRedis()) }`},
 	{Code: `
+		declare const items: string[]
+		declare function normalize(value: string): string
+
+		const result = items.map((item) => normalize(item))
+	`},
+	{Code: `
+		declare const items: string[]
+		declare function isVisible(value: string): boolean
+
+		const result = items.filter((item) => isVisible(item))
+	`},
+	{Code: `
+		declare const items: string[]
+		declare function store(value: string): void
+
+		items.forEach((item) => store(item))
+	`},
+	{Code: `
+		declare function flush(): void
+
+		setTimeout(() => flush(), 10)
+	`},
+	{Code: `
+		declare function run<T>(value: Promise<T>): void
+		declare const errore: {
+			tryAsync<T>(fn: () => Promise<T>): Promise<T>
+		}
+		declare const thread: {
+			sendTyping(): Promise<void>
+		}
+
+		run(errore.tryAsync(() => thread.sendTyping()))
+	`},
+	{Code: `
+		declare function debounce(options: {
+			callback: () => Promise<void>
+		}): void
+		declare const service: {
+			persist(): Promise<void>
+		}
+
+		debounce({
+			callback: async () => service.persist(),
+		})
+	`},
+	{Code: `
+		declare function onClick(handler: () => void): void
+		declare const service: {
+			submit(): void
+		}
+
+		onClick(() => service.submit())
+	`},
+	{Code: `
 		declare function prepare(): void;
 		declare function write(value: string): string;
 		declare function finalize(value: string): string;

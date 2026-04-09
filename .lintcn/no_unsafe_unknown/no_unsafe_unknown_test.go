@@ -27,6 +27,30 @@ var validCases = []rule_tester.ValidTestCase{
 	{Code: `const value = input as string;`},
 	{Code: `const value = { a: 1 } as const;`},
 	{Code: `function wrap<T>(value: T) { return value }`},
+	{Code: `
+		function parseErrorMessage(err: unknown): string | undefined {
+			if (
+				err &&
+				typeof err === 'object' &&
+				'message' in err &&
+				typeof err.message === 'string'
+			) {
+				return err.message
+			}
+			return undefined
+		}
+	`},
+	{Code: `
+		function normalizeLogo(raw: unknown): string | undefined {
+			if (!raw || typeof raw !== 'object') {
+				return undefined
+			}
+			if ('src' in raw && typeof raw.src === 'string') {
+				return raw.src
+			}
+			return undefined
+		}
+	`},
 }
 
 var invalidCases = []rule_tester.InvalidTestCase{
@@ -47,7 +71,7 @@ var invalidCases = []rule_tester.InvalidTestCase{
 		Errors: []rule_tester.InvalidTestCaseError{
 			{MessageId: "unknownFunctionParameter"},
 		},
-		},
+	},
 	{
 		Code: `class Service { run(input: unknown) { return input } }`,
 		Errors: []rule_tester.InvalidTestCaseError{

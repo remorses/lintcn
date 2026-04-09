@@ -19,10 +19,8 @@ func TestNoInOperator(t *testing.T) {
 	)
 }
 
-// No valid cases — this rule warns on ALL uses of the in operator,
-// similar to no-type-assertion which warns on all as X expressions.
-// for...in loops use KindForInStatement, not KindBinaryExpression,
-// so they are not caught by this rule.
+// Current valid cases are operations the rule does not visit yet plus expected
+// future-valid runtime guard patterns that currently warn and document noise.
 var validCases = []rule_tester.ValidTestCase{
 	// for...in loop — not a binary in expression
 	{Code: `
@@ -44,6 +42,33 @@ var validCases = []rule_tester.ValidTestCase{
 	{Code: `
 		declare const x: Error | string;
 		if (x instanceof Error) { console.log(x.message); }
+	`},
+	// Runtime guard over unknown object shape should stay allowed.
+	{Code: `
+		function getErrorMessage(err: unknown): string | undefined {
+			if (
+				err &&
+				typeof err === 'object' &&
+				'message' in err &&
+				typeof err.message === 'string'
+			) {
+				return err.message
+			}
+			return undefined
+		}
+	`},
+	// Parser-style object guards are noisy today but should be valid.
+	{Code: `
+		function hasTab(value: unknown): boolean {
+			if (
+				value &&
+				typeof value === 'object' &&
+				'tab' in value
+			) {
+				return true
+			}
+			return false
+		}
 	`},
 }
 
