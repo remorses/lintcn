@@ -93,12 +93,90 @@ func declarationLineCount(node *ast.Node) int {
 	return endLine - startLine + 1
 }
 
+func isInlineableSingleUseFunction(node *ast.Node) bool {
+	if node == nil || node.Body() == nil {
+		return false
+	}
+
+	body := ast.SkipParentheses(node.Body())
+	if body == nil {
+		return false
+	}
+
+	if !ast.IsBlock(body) {
+		return isInlineableSingleUseExpression(body)
+	}
+
+	statements := body.AsBlock().Statements.Nodes
+	if len(statements) != 1 {
+		return false
+	}
+
+	statement := statements[0]
+	if !ast.IsReturnStatement(statement) || statement.AsReturnStatement().Expression == nil {
+		return false
+	}
+
+	return isInlineableSingleUseExpression(statement.AsReturnStatement().Expression)
+}
+
+func isInlineableSingleUseExpression(node *ast.Node) bool {
+	node = ast.SkipParentheses(node)
+	if node == nil {
+		return false
+	}
+
+	return !isCallChainExpression(node)
+}
+
+func isCallChainExpression(node *ast.Node) bool {
+	node = ast.SkipParentheses(node)
+	if node == nil || !ast.IsCallExpression(node) {
+		return false
+	}
+
+	callee := ast.SkipParentheses(node.AsCallExpression().Expression)
+	if callee == nil {
+		return false
+	}
+
+	switch {
+	case ast.IsPropertyAccessExpression(callee):
+		return accessBaseContainsCall(callee.AsPropertyAccessExpression().Expression)
+	case ast.IsElementAccessExpression(callee):
+		return accessBaseContainsCall(callee.AsElementAccessExpression().Expression)
+	default:
+		return false
+	}
+}
+
+func accessBaseContainsCall(node *ast.Node) bool {
+	node = ast.SkipParentheses(node)
+	if node == nil {
+		return false
+	}
+
+	switch {
+	case ast.IsCallExpression(node):
+		return true
+	case ast.IsPropertyAccessExpression(node):
+		return accessBaseContainsCall(node.AsPropertyAccessExpression().Expression)
+	case ast.IsElementAccessExpression(node):
+		return accessBaseContainsCall(node.AsElementAccessExpression().Expression)
+	default:
+		return false
+	}
+}
+
 var NoSingleUseTopLevelFunctionRule = rule.Rule{
 	Name: "no-single-use-top-level-function",
 	Run: func(ctx rule.RuleContext, options any) rule.RuleListeners {
 		return rule.RuleListeners{
 			ast.KindFunctionDeclaration: func(node *ast.Node) {
 				if !isTopLevelFunctionDeclaration(node) {
+					return
+				}
+				if !isInlineableSingleUseFunction(node) {
 					return
 				}
 

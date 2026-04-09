@@ -14,48 +14,41 @@ Message: Potential leaked value in JSX. Using `&&` with a number or bigint may r
 ---
 
 [TestJsxNoLeakedRender/invalid-2 - 1]
-Diagnostic 1: noLeakedConditionalRendering (1:29 - 1:29)
-Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
-   1 | declare const x: any; <div>{x && <span/>}</div>
-     |                             ~
----
-
-[TestJsxNoLeakedRender/invalid-3 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:41 - 1:41)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const x: number | string; <div>{x && <span/>}</div>
      |                                         ~
 ---
 
-[TestJsxNoLeakedRender/invalid-4 - 1]
+[TestJsxNoLeakedRender/invalid-3 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:53 - 1:53)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | function Foo<T extends number>(x: T) { return <div>{x && <span/>}</div> }
      |                                                     ~
 ---
 
-[TestJsxNoLeakedRender/invalid-5 - 1]
+[TestJsxNoLeakedRender/invalid-4 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:27 - 1:27)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const x: 0; <div>{x && <span/>}</div>
      |                           ~
 ---
 
-[TestJsxNoLeakedRender/invalid-6 - 1]
+[TestJsxNoLeakedRender/invalid-5 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:32 - 1:32)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const x: bigint; <div>{x && <span/>}</div>
      |                                ~
 ---
 
-[TestJsxNoLeakedRender/invalid-7 - 1]
+[TestJsxNoLeakedRender/invalid-6 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:28 - 1:28)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const x: 0n; <div>{x && <span/>}</div>
      |                            ~
 ---
 
-[TestJsxNoLeakedRender/invalid-8 - 1]
+[TestJsxNoLeakedRender/invalid-7 - 1]
 Diagnostic 1: noLeakedConditionalRendering (3:7 - 3:23)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    2 | declare const data: { items: string[] };
@@ -64,74 +57,81 @@ Message: Potential leaked value in JSX. Using `&&` with a number or bigint may r
    4 |       
 ---
 
-[TestJsxNoLeakedRender/invalid-9 - 1]
+[TestJsxNoLeakedRender/invalid-8 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:35 - 1:35)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const x: 0 | 1 | 2; <div>{x && <span/>}</div>
      |                                   ~
 ---
 
-[TestJsxNoLeakedRender/invalid-10 - 1]
+[TestJsxNoLeakedRender/invalid-9 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:39 - 1:39)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const x: number | null; <div>{x && <span/>}</div>
      |                                       ~
 ---
 
-[TestJsxNoLeakedRender/invalid-11 - 1]
+[TestJsxNoLeakedRender/invalid-10 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:44 - 1:44)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const x: number | undefined; <div>{x && <span/>}</div>
      |                                            ~
 ---
 
-[TestJsxNoLeakedRender/invalid-12 - 1]
+[TestJsxNoLeakedRender/invalid-11 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:53 - 1:53)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | function Foo<T extends bigint>(x: T) { return <div>{x && <span/>}</div> }
      |                                                     ~
 ---
 
-[TestJsxNoLeakedRender/invalid-13 - 1]
+[TestJsxNoLeakedRender/invalid-12 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:33 - 1:45)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const x: unknown; <div>{(x as number) && <span/>}</div>
      |                                 ~~~~~~~~~~~~~
 ---
 
-[TestJsxNoLeakedRender/invalid-14 - 1]
+[TestJsxNoLeakedRender/invalid-13 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:53 - 1:53)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const x: number & { brand: 'count' }; <div>{x && <span/>}</div>
      |                                                     ~
 ---
 
-[TestJsxNoLeakedRender/invalid-15 - 1]
+[TestJsxNoLeakedRender/invalid-14 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:39 - 1:47)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const counts: number[]; <div>{counts[0] && <span/>}</div>
      |                                       ~~~~~~~~~
 ---
 
-[TestJsxNoLeakedRender/invalid-16 - 1]
+[TestJsxNoLeakedRender/invalid-15 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:45 - 1:54)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const getCount: () => number; <div>{getCount() && <span/>}</div>
      |                                             ~~~~~~~~~~
 ---
 
-[TestJsxNoLeakedRender/invalid-17 - 1]
+[TestJsxNoLeakedRender/invalid-16 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:56 - 1:67)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | declare const rating: { count?: number | null }; <div>{rating.count && <span/>}</div>
      |                                                        ~~~~~~~~~~~~
 ---
 
-[TestJsxNoLeakedRender/invalid-18 - 1]
+[TestJsxNoLeakedRender/invalid-17 - 1]
 Diagnostic 1: noLeakedConditionalRendering (1:22 - 1:22)
 Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
    1 | const t = NaN; <div>{t && <span/>}</div>
      |                      ~
+---
+
+[TestJsxNoLeakedRender/invalid-18 - 1]
+Diagnostic 1: noLeakedConditionalRendering (1:20 - 1:20)
+Message: Potential leaked value in JSX. Using `&&` with a number or bigint may render unwanted values (0, NaN). Use `!!`, `Boolean()`, or a ternary to be explicit.
+   1 | const t = 0; <div>{t && <span/>}</div>
+     |                    ~
 ---
 
 [TestJsxNoLeakedRender/invalid-19 - 1]

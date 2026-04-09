@@ -19,8 +19,6 @@ func TestNoInOperator(t *testing.T) {
 	)
 }
 
-// Current valid cases are operations the rule does not visit yet plus expected
-// future-valid runtime guard patterns that currently warn and document noise.
 var validCases = []rule_tester.ValidTestCase{
 	// for...in loop — not a binary in expression
 	{Code: `
@@ -42,33 +40,6 @@ var validCases = []rule_tester.ValidTestCase{
 	{Code: `
 		declare const x: Error | string;
 		if (x instanceof Error) { console.log(x.message); }
-	`},
-	// Runtime guard over unknown object shape should stay allowed.
-	{Code: `
-		function getErrorMessage(err: unknown): string | undefined {
-			if (
-				err &&
-				typeof err === 'object' &&
-				'message' in err &&
-				typeof err.message === 'string'
-			) {
-				return err.message
-			}
-			return undefined
-		}
-	`},
-	// Parser-style object guards are noisy today but should be valid.
-	{Code: `
-		function hasTab(value: unknown): boolean {
-			if (
-				value &&
-				typeof value === 'object' &&
-				'tab' in value
-			) {
-				return true
-			}
-			return false
-		}
 	`},
 }
 
@@ -139,6 +110,37 @@ var invalidCases = []rule_tester.InvalidTestCase{
 		Errors: []rule_tester.InvalidTestCaseError{
 			{MessageId: "inOperator"},
 		},
+	},
+	{
+		Code: `
+			function getErrorMessage(err: unknown): string | undefined {
+				if (
+					err &&
+					typeof err === 'object' &&
+					'message' in err &&
+					typeof err.message === 'string'
+				) {
+					return err.message
+				}
+				return undefined
+			}
+		`,
+		Errors: []rule_tester.InvalidTestCaseError{{MessageId: "inOperator"}},
+	},
+	{
+		Code: `
+			function hasTab(value: unknown): boolean {
+				if (
+					value &&
+					typeof value === 'object' &&
+					'tab' in value
+				) {
+					return true
+				}
+				return false
+			}
+		`,
+		Errors: []rule_tester.InvalidTestCaseError{{MessageId: "inOperator"}},
 	},
 
 	// --- Union narrowing special case ---

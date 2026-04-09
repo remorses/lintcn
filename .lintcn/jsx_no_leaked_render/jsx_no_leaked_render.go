@@ -5,10 +5,9 @@
 // Package jsx_no_leaked_render implements a rule that prevents falsy values from
 // leaking into JSX expressions when using the && operator.
 //
-// This rule flags number, bigint, and any types because:
+// This rule flags number and bigint types because:
 //   - number: 0 and NaN render as visible "0" and "NaN" in JSX
 //   - bigint: 0n renders as visible "0" in JSX
-//   - any: could be any of the above
 //
 // Strings are NOT flagged because React 18+ treats empty strings as null
 // (no text node created). See: https://github.com/facebook/react/pull/22807
@@ -37,11 +36,6 @@ func checkLeakyType(t *checker.Type) bool {
 	if t == nil {
 		return false
 	}
-	// any type is always problematic
-	if utils.IsTypeFlagSet(t, checker.TypeFlagsAny) {
-		return true
-	}
-
 	// Check for number types
 	if utils.IsTypeFlagSet(t, checker.TypeFlagsNumberLike) {
 		// If it's a number literal, check if it's 0 (falsy)

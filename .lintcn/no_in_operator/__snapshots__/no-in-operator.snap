@@ -54,6 +54,24 @@ Message: `in` operator check on type `Config ({ debug?: boolean | undefined })`.
 ---
 
 [TestNoInOperator/invalid-6 - 1]
+Diagnostic 1: inOperator (6:6 - 6:21)
+Message: `in` operator check on type `object`. The `in` operator is usually an escape hatch. Consider using a type guard, discriminated union, or proper type narrowing instead.
+   5 |                     typeof err === 'object' &&
+   6 |                     'message' in err &&
+     |                     ~~~~~~~~~~~~~~~~
+   7 |                     typeof err.message === 'string'
+---
+
+[TestNoInOperator/invalid-7 - 1]
+Diagnostic 1: inOperator (6:6 - 6:19)
+Message: `in` operator check on type `object`. The `in` operator is usually an escape hatch. Consider using a type guard, discriminated union, or proper type narrowing instead.
+   5 |                     typeof value === 'object' &&
+   6 |                     'tab' in value
+     |                     ~~~~~~~~~~~~~~
+   7 |                 ) {
+---
+
+[TestNoInOperator/invalid-8 - 1]
 Diagnostic 1: inOperatorUnionNarrowing (5:8 - 5:23)
 Message: `in` operator on union type `Cat | Dog (Cat ({ kind: "cat"; meow: () => void }) | Dog ({ kind: "dog"; bark: () => void }))`. Property `meow` exists in Cat but not in Dog. Consider using a discriminant property (e.g. a `kind` or `type` field) to narrow the union instead of `in`.
    4 |             declare const animal: Cat | Dog;
@@ -62,7 +80,7 @@ Message: `in` operator on union type `Cat | Dog (Cat ({ kind: "cat"; meow: () =>
    6 |         
 ---
 
-[TestNoInOperator/invalid-7 - 1]
+[TestNoInOperator/invalid-9 - 1]
 Diagnostic 1: inOperatorUnionNarrowing (5:8 - 5:28)
 Message: `in` operator on union type `Admin | Guest (Admin ({ role: string; permissions: string[] }) | Guest ({ role: string }))`. Property `permissions` exists in Admin but not in Guest. Consider using a discriminant property (e.g. a `kind` or `type` field) to narrow the union instead of `in`.
    4 |             declare const user: Admin | Guest;
@@ -71,7 +89,7 @@ Message: `in` operator on union type `Admin | Guest (Admin ({ role: string; perm
    6 |         
 ---
 
-[TestNoInOperator/invalid-8 - 1]
+[TestNoInOperator/invalid-10 - 1]
 Diagnostic 1: inOperatorUnionNarrowing (6:8 - 6:15)
 Message: `in` operator on union type `A | B | C (A ({ shared: string; a: number }) | B ({ shared: string }) | C ({ c: boolean }))`. Property `a` exists in A but not in B, C. Consider using a discriminant property (e.g. a `kind` or `type` field) to narrow the union instead of `in`.
    5 |             declare const x: A | B | C;
@@ -80,7 +98,7 @@ Message: `in` operator on union type `A | B | C (A ({ shared: string; a: number 
    7 |         
 ---
 
-[TestNoInOperator/invalid-9 - 1]
+[TestNoInOperator/invalid-11 - 1]
 Diagnostic 1: inOperatorUnionNarrowing (5:8 - 5:23)
 Message: `in` operator on union type `Failure | Success (Failure ({ error: Error }) | Success ({ data: string }))`. Property `data` exists in Success but not in Failure. Consider using a discriminant property (e.g. a `kind` or `type` field) to narrow the union instead of `in`.
    4 |             declare const result: Success | Failure;
@@ -89,7 +107,7 @@ Message: `in` operator on union type `Failure | Success (Failure ({ error: Error
    6 |         
 ---
 
-[TestNoInOperator/invalid-10 - 1]
+[TestNoInOperator/invalid-12 - 1]
 Diagnostic 1: inOperator (5:8 - 5:23)
 Message: `in` operator check on type `Cat | Dog (Cat ({ name: string; meow: () => void }) | Dog ({ name: string; bark: () => void }))`. The `in` operator is usually an escape hatch. Consider using a type guard, discriminated union, or proper type narrowing instead.
    4 |             declare const animal: Cat | Dog;
@@ -98,7 +116,7 @@ Message: `in` operator check on type `Cat | Dog (Cat ({ name: string; meow: () =
    6 |         
 ---
 
-[TestNoInOperator/invalid-11 - 1]
+[TestNoInOperator/invalid-13 - 1]
 Diagnostic 1: inOperator (3:5 - 3:18)
 Message: `in` operator check on type `User ({ name: string })`. The `in` operator is usually an escape hatch. Consider using a type guard, discriminated union, or proper type narrowing instead.
    2 | declare const user: User;
@@ -106,7 +124,7 @@ Message: `in` operator check on type `User ({ name: string })`. The `in` operato
      |     ~~~~~~~~~~~~~~
 ---
 
-[TestNoInOperator/invalid-12 - 1]
+[TestNoInOperator/invalid-14 - 1]
 Diagnostic 1: inOperatorUnionNarrowing (4:5 - 4:20)
 Message: `in` operator on union type `Cat | Dog (Cat ({ kind: "cat"; meow: () => void }) | Dog ({ kind: "dog"; bark: () => void }))`. Property `meow` exists in Cat but not in Dog. Consider using a discriminant property (e.g. a `kind` or `type` field) to narrow the union instead of `in`.
    3 | declare const animal: Cat | Dog;

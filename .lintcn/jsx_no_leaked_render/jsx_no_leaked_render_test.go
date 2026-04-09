@@ -104,14 +104,6 @@ func TestJsxNoLeakedRender(t *testing.T) {
 					{MessageId: "noLeakedConditionalRendering"},
 				},
 			},
-			// any type
-			{
-				Code: `declare const x: any; <div>{x && <span/>}</div>`,
-				Tsx:  true,
-				Errors: []rule_tester.InvalidTestCaseError{
-					{MessageId: "noLeakedConditionalRendering"},
-				},
-			},
 			// Union with number
 			{
 				Code: `declare const x: number | string; <div>{x && <span/>}</div>`,

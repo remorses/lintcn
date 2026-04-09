@@ -17,7 +17,7 @@ What Gets Flagged
   --------  -------   ------------------------------------------
   number    yes       Could be 0 or NaN, which render visibly
   bigint    yes       Could be 0n, which renders as "0"
-  any       yes       Could be any of the above
+  any       no        Too imprecise by itself; prefer numeric-only signal
   string    no        React 18+ treats "" as null (safe)
   boolean   no        false is ignored by React
   null      no        Ignored by React

@@ -42,34 +42,52 @@ Message: Function parameter `input` uses `unknown`. Using `unknown` in function 
 ---
 
 [TestNoUnsafeUnknown/invalid-6 - 1]
+Diagnostic 1: unknownFunctionParameter (2:36 - 2:42)
+Message: Function parameter `err` uses `unknown`. Using `unknown` in function arguments to get around TypeScript errors is a code smell. Read the real dependency and value types, and type the parameter correctly instead of silencing the checker with generic helpers or wrappers.
+   1 | 
+   2 |             function parseErrorMessage(err: unknown): string | undefined {
+     |                                             ~~~~~~~
+   3 |                 if (
+---
+
+[TestNoUnsafeUnknown/invalid-7 - 1]
+Diagnostic 1: unknownFunctionParameter (2:32 - 2:38)
+Message: Function parameter `raw` uses `unknown`. Using `unknown` in function arguments to get around TypeScript errors is a code smell. Read the real dependency and value types, and type the parameter correctly instead of silencing the checker with generic helpers or wrappers.
+   1 | 
+   2 |             function normalizeLogo(raw: unknown): string | undefined {
+     |                                         ~~~~~~~
+   3 |                 if (!raw || typeof raw !== 'object') {
+---
+
+[TestNoUnsafeUnknown/invalid-8 - 1]
 Diagnostic 1: unknownAssertion (1:15 - 1:30)
 Message: Type assertion to `unknown` uses `unknown`. This is usually a forced conversion hiding a real type mismatch. Read the actual source and target types, then narrow or transform the value instead of laundering it through `unknown`.
    1 | const value = input as unknown;
      |               ~~~~~~~~~~~~~~~~
 ---
 
-[TestNoUnsafeUnknown/invalid-7 - 1]
+[TestNoUnsafeUnknown/invalid-9 - 1]
 Diagnostic 1: unknownAssertion (1:15 - 1:39)
 Message: Type assertion to `Promise<unknown>` uses `unknown`. This is usually a forced conversion hiding a real type mismatch. Read the actual source and target types, then narrow or transform the value instead of laundering it through `unknown`.
    1 | const value = input as Promise<unknown>;
      |               ~~~~~~~~~~~~~~~~~~~~~~~~~
 ---
 
-[TestNoUnsafeUnknown/invalid-8 - 1]
+[TestNoUnsafeUnknown/invalid-10 - 1]
 Diagnostic 1: unknownAssertion (1:15 - 1:28)
 Message: Type assertion to `unknown` uses `unknown`. This is usually a forced conversion hiding a real type mismatch. Read the actual source and target types, then narrow or transform the value instead of laundering it through `unknown`.
    1 | const value = <unknown>input;
      |               ~~~~~~~~~~~~~~
 ---
 
-[TestNoUnsafeUnknown/invalid-9 - 1]
+[TestNoUnsafeUnknown/invalid-11 - 1]
 Diagnostic 1: unknownAssertionFromUnknown (1:46 - 1:60)
 Message: Type assertion to `string` from `unknown`. This usually means the code is trying to force an incompatible conversion. Narrow the value with real runtime checks or fix the source types instead of forcing it through `unknown`.
    1 | declare const value: unknown; const result = value as string;
      |                                              ~~~~~~~~~~~~~~~
 ---
 
-[TestNoUnsafeUnknown/invalid-10 - 1]
+[TestNoUnsafeUnknown/invalid-12 - 1]
 Diagnostic 1: unknownAssertionFromUnknown (1:53 - 1:93)
 Message: Type assertion to `Map<string, number>` from `unknown`. The original expression type is `{ id: string; }`. Using `unknown` in an assertion to force a different type is a serious code smell. Read the real types and narrow or transform the value instead.
    1 | declare const value: { id: string }; const result = (value as unknown) as Map<string, number>;
