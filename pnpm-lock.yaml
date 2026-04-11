@@ -12,8 +12,8 @@ importers:
         specifier: ^8.0.0
         version: 8.0.0
       goke:
-        specifier: ^6.3.0
-        version: 6.3.0
+        specifier: ^6.5.2
+        version: 6.5.2
       tar:
         specifier: ^7.5.12
         version: 7.5.12
@@ -49,8 +49,8 @@ packages:
     resolution: {integrity: sha512-JGG8pvDi2C+JxidYdIwQDyS/CgcrIdh18cvgxcBge3wSHRQOrooMD3GlFBcmMJAN9M42SAZjDp5zv1dglJjwww==}
     engines: {node: '>=20'}
 
-  goke@6.3.0:
-    resolution: {integrity: sha512-U9vmFbQdHpfUAO9nzLn7Kaxbz7u5X5d5bgme0P7dCw8Eb7MozpFvsaUgcoD2JNx0anaQUZRs0Hb1omZUOCAM7A==}
+  goke@6.5.2:
+    resolution: {integrity: sha512-AJKTaBwSj9D9cAVQZOeMBG37Qf5YbCd37dHRUFecSHYYIAPlb8RHGGw7MiLD2aZS2d37gq0zD+B1nfe7xvB7xg==}
     engines: {node: '>=18'}
 
   locate-path@8.0.0:
@@ -72,9 +72,6 @@ packages:
   p-locate@6.0.0:
     resolution: {integrity: sha512-wPrq66Llhl7/4AGC6I+cqxT07LhXvWL08LNXz1fENOw0Ap4sRZZ/gZpTTJ5jpurzzzfS2W/Ge9BY3LgLjCShcw==}
     engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
-
-  picocolors@1.1.1:
-    resolution: {integrity: sha512-xceH2snhtb5M9liqDsmEw56le376mTZkEX/jEb/RxNFyegNul7eNslCXP9FDj/Lcu0X8KEyMceP2ntpaHrDEVA==}
 
   tar@7.5.12:
     resolution: {integrity: sha512-9TsuLcdhOn4XztcQqhNyq1KOwOOED/3k58JAvtULiYqbO8B/0IBAAIE1hj0Svmm58k27TmcigyDI0deMlgG3uw==}
@@ -121,9 +118,7 @@ snapshots:
       locate-path: 8.0.0
       unicorn-magic: 0.3.0
 
-  goke@6.3.0:
-    dependencies:
-      picocolors: 1.1.1
+  goke@6.5.2: {}
 
   locate-path@8.0.0:
     dependencies:
@@ -142,8 +137,6 @@ snapshots:
   p-locate@6.0.0:
     dependencies:
       p-limit: 4.0.0
-
-  picocolors@1.1.1: {}
 
   tar@7.5.12:
     dependencies:

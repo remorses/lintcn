@@ -58,7 +58,7 @@ cli
       passthroughArgs.push('--list-files')
     }
     // pass through anything after --
-    const doubleDash = options['--']
+    const doubleDash = (options as Record<string, unknown>)['--']
     if (doubleDash && Array.isArray(doubleDash)) {
       passthroughArgs.push(...doubleDash)
     }
