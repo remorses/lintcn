@@ -1,0 +1,46 @@
+no-redundant-exported-return-type
+
+Warns on `ReturnType<...>` when the target is exported and the return already resolves to a named type that can be referenced directly.
+
+Source: custom rule for lintcn
+
+The Problem
+
+```ts
+export interface User {
+  id: string
+}
+
+export function getUser(): User {
+  return { id: '1' }
+}
+
+export type UserResult = ReturnType<typeof getUser>
+
+declare function takesUser(user: ReturnType<typeof getUser>): void
+
+interface Config {
+  currentUser: ReturnType<typeof getUser>
+}
+```
+
+Those `ReturnType<typeof getUser>` annotations add indirection even though `User` is already the public return type.
+
+Preferred
+
+```ts
+export type UserResult = User
+
+declare function takesUser(user: User): void
+
+interface Config {
+  currentUser: User
+}
+```
+
+The rule is conservative:
+
+- it only checks `ReturnType<...>`
+- it only reports when the target passed to `ReturnType` is exported
+- it only reports when the resolved return type is publicly nameable
+- it skips private/local return types and anonymous object return shapes

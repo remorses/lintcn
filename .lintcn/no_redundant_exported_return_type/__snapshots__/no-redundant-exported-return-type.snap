@@ -1,0 +1,187 @@
+
+[TestNoRedundantExportedReturnType/invalid-0 - 1]
+Diagnostic 1: redundantExportedReturnType (6:29 - 6:54)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   5 |             }
+   6 |             export type UserResult = ReturnType<typeof getUser>
+     |                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   7 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-1 - 1]
+Diagnostic 1: redundantExportedReturnType (7:29 - 7:54)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   6 |             }
+   7 |             export type UserResult = ReturnType<typeof getUser>
+     |                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   8 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-2 - 1]
+Diagnostic 1: redundantExportedReturnType (4:28 - 4:53)
+Message: `ReturnType<Loader<string>>` hides an exported return type. Use `Box<string>` directly instead.
+   3 |             export type Loader<T> = () => Box<T>
+   4 |             export type StringBox = ReturnType<Loader<string>>
+     |                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   5 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-3 - 1]
+Diagnostic 1: redundantExportedReturnType (4:29 - 4:46)
+Message: `ReturnType<Loader>` hides an exported return type. Use `User` directly instead.
+   3 |             export type Loader = () => User
+   4 |             export type UserResult = ReturnType<Loader>
+     |                                      ~~~~~~~~~~~~~~~~~~
+   5 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-4 - 1]
+Diagnostic 1: redundantExportedReturnType (6:29 - 6:54)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `Promise<User>` directly instead.
+   5 |             }
+   6 |             export type UserResult = ReturnType<typeof getUser>
+     |                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   7 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-5 - 1]
+Diagnostic 1: redundantExportedReturnType (6:29 - 6:54)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User | null` directly instead.
+   5 |             }
+   6 |             export type UserResult = ReturnType<typeof getUser>
+     |                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   7 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-6 - 1]
+Diagnostic 1: redundantExportedReturnType (4:30 - 4:53)
+Message: `ReturnType<Loader<User>>` hides an exported return type. Use `Promise<User>` directly instead.
+   3 |             export type Loader<T> = () => Promise<T>
+   4 |             export type UserPromise = ReturnType<Loader<User>>
+     |                                       ~~~~~~~~~~~~~~~~~~~~~~~~
+   5 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-7 - 1]
+Diagnostic 1: redundantExportedReturnType (5:30 - 5:53)
+Message: `ReturnType<Loader<User>>` hides an exported return type. Use `Promise<Box<User>>` directly instead.
+   4 |             export type Loader<T> = () => Promise<Box<T>>
+   5 |             export type UserPromise = ReturnType<Loader<User>>
+     |                                       ~~~~~~~~~~~~~~~~~~~~~~~~
+   6 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-8 - 1]
+Diagnostic 1: redundantExportedReturnType (6:37 - 6:62)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   5 |             }
+   6 |             declare function takesUser(user: ReturnType<typeof getUser>): void
+     |                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   7 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-9 - 1]
+Diagnostic 1: redundantExportedReturnType (9:28 - 9:53)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   8 |             }
+   9 |             function saveUser(user: ReturnType<typeof getUser>): ReturnType<typeof wrap> {
+     |                                     ~~~~~~~~~~~~~~~~~~~~~~~~~~
+  10 |                 return wrap(user)
+
+Diagnostic 2: redundantExportedReturnType (9:57 - 9:79)
+Message: `ReturnType<typeof wrap>` hides an exported return type. Use `User` directly instead.
+   8 |             }
+   9 |             function saveUser(user: ReturnType<typeof getUser>): ReturnType<typeof wrap> {
+     |                                                                  ~~~~~~~~~~~~~~~~~~~~~~~
+  10 |                 return wrap(user)
+---
+
+[TestNoRedundantExportedReturnType/invalid-10 - 1]
+Diagnostic 1: redundantExportedReturnType (6:21 - 6:46)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   5 |             }
+   6 |             type MaybeUser = ReturnType<typeof getUser> | null
+     |                              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   7 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-11 - 1]
+Diagnostic 1: redundantExportedReturnType (7:22 - 7:47)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   6 |             }
+   7 |             type TaggedUser = ReturnType<typeof getUser> & Tagged
+     |                               ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   8 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-12 - 1]
+Diagnostic 1: redundantExportedReturnType (7:18 - 7:43)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   6 |             interface Config {
+   7 |                 currentUser: ReturnType<typeof getUser>
+     |                              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   8 |             }
+---
+
+[TestNoRedundantExportedReturnType/invalid-13 - 1]
+Diagnostic 1: redundantExportedReturnType (5:18 - 5:35)
+Message: `ReturnType<Loader>` hides an exported return type. Use `User` directly instead.
+   4 |             interface Config {
+   5 |                 currentUser: ReturnType<Loader>
+     |                              ~~~~~~~~~~~~~~~~~~
+   6 |             }
+---
+
+[TestNoRedundantExportedReturnType/invalid-14 - 1]
+Diagnostic 1: redundantExportedReturnType (6:37 - 6:62)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   5 |             }
+   6 |             declare function takesUser(user: ReturnType<typeof getUser>): void
+     |                                              ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   7 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-15 - 1]
+Diagnostic 1: redundantExportedReturnType (5:12 - 5:37)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   4 |                 meta: {
+   5 |                     user: ReturnType<typeof getUser>
+     |                           ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   6 |                 }
+---
+
+[TestNoRedundantExportedReturnType/invalid-16 - 1]
+Diagnostic 1: redundantExportedReturnType (3:22 - 3:47)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   2 |             import { getUser } from './api'
+   3 |             type UserTuple = [ReturnType<typeof getUser>, string]
+     |                               ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   4 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-17 - 1]
+Diagnostic 1: redundantExportedReturnType (3:26 - 3:51)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   2 |             import { getUser } from './api'
+   3 |             type UserList = Array<ReturnType<typeof getUser>>
+     |                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   4 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-18 - 1]
+Diagnostic 1: redundantExportedReturnType (3:36 - 3:61)
+Message: `ReturnType<typeof getUser>` hides an exported return type. Use `User` directly instead.
+   2 |             import { getUser } from './api'
+   3 |             declare function takeUser(user: ReturnType<typeof getUser>): void
+     |                                             ~~~~~~~~~~~~~~~~~~~~~~~~~~
+   4 |         
+---
+
+[TestNoRedundantExportedReturnType/invalid-19 - 1]
+Diagnostic 1: redundantExportedReturnType (3:42 - 3:70)
+Message: `ReturnType<typeof getSession>` hides an exported return type. Use `User` directly instead.
+   2 |             import { getSession } from 'auth-kit'
+   3 |             declare function takeSession(session: ReturnType<typeof getSession>): void
+     |                                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   4 |         
+---
