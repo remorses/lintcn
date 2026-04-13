@@ -1,0 +1,32 @@
+prefer-is-truthy
+
+Errors on inline nullable type guards passed directly to `filter`.
+
+Source: custom rule for lintcn
+
+The Problem
+
+Inline lambdas like this add an ad hoc type guard at the use site:
+
+  const activePokemon = pokemon.filter(
+    (value): value is Pokemon => value !== null,
+  )
+
+When the callback parameter is already `Pokemon | null | undefined`, use a
+reusable helper like `isTruthy` instead. That is shorter, reusable, and avoids
+repeating local guard logic inline.
+
+What Gets Flagged
+
+- Inline arrow functions passed directly to `filter`
+- Inline function expressions passed directly to `filter`
+- Only when they declare a type predicate like `value is Pokemon`
+- Only when the parameter type is the same non-nullable type plus `null` and/or
+  `undefined`
+
+What Is Allowed
+
+- Reusable helpers like `pokemon.filter(isTruthy)`
+- Standalone reusable type guards declared once and reused
+- Inline `filter` callbacks without a type predicate
+- Other callback sites outside `filter`

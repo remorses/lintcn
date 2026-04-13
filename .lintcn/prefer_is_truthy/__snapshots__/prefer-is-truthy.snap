@@ -1,0 +1,31 @@
+
+[TestPreferIsTruthy/invalid-0 - 1]
+Diagnostic 1: preferIsTruthy (7:41 - 7:83)
+Message: Inline `filter` type guard from `Pokemon | null | undefined` to `Pokemon`. Use a reusable helper like `isTruthy` instead of an ad hoc nullable guard lambda.
+   6 | 
+   7 |             const activePokemon = pokemon.filter((value): value is Pokemon => value !== null)
+     |                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   8 |         
+---
+
+[TestPreferIsTruthy/invalid-1 - 1]
+Diagnostic 1: preferIsTruthy (7:41 - 9:4)
+Message: Inline `filter` type guard from `Pokemon | null | undefined` to `Pokemon`. Use a reusable helper like `isTruthy` instead of an ad hoc nullable guard lambda.
+   6 | 
+   7 |             const activePokemon = pokemon.filter(function (value): value is Pokemon {
+     |                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   8 |                 return value != null
+     | ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   9 |             })
+     | ~~~~~~~~~~~~~
+  10 |         
+---
+
+[TestPreferIsTruthy/invalid-2 - 1]
+Diagnostic 1: preferIsTruthy (7:41 - 7:106)
+Message: Inline `filter` type guard from `Pokemon | null | undefined` to `Pokemon`. Use a reusable helper like `isTruthy` instead of an ad hoc nullable guard lambda.
+   6 | 
+   7 |             const activePokemon = pokemon.filter((value): value is Pokemon => value !== null && value !== undefined)
+     |                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+   8 |         
+---
