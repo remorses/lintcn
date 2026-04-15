@@ -20,6 +20,13 @@ func TestPreferIsTruthy(t *testing.T) {
 	)
 }
 
+func TestIsNullishGuardExpressionNilNode(t *testing.T) {
+	t.Parallel()
+	if isNullishGuardExpression(nil, "value") {
+		t.Fatal("expected nil node to be treated as non-guard")
+	}
+}
+
 var validCases = []rule_tester.ValidTestCase{
 	{
 		Code: `

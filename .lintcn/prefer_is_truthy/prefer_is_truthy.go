@@ -14,6 +14,13 @@ import (
 	"github.com/typescript-eslint/tsgolint/internal/utils"
 )
 
+func skipParenthesesSafe(node *ast.Node) *ast.Node {
+	if node == nil {
+		return nil
+	}
+	return ast.SkipParentheses(node)
+}
+
 func isInlineFilterCallback(node *ast.Node) bool {
 	if node == nil || node.Parent == nil || !ast.IsCallExpression(node.Parent) {
 		return false
@@ -100,12 +107,12 @@ func getReturnedExpression(node *ast.Node) *ast.Node {
 }
 
 func isParameterReference(node *ast.Node, parameterName string) bool {
-	node = ast.SkipParentheses(node)
+	node = skipParenthesesSafe(node)
 	return node != nil && ast.IsIdentifier(node) && node.AsIdentifier().Text == parameterName
 }
 
 func isNullishLiteral(node *ast.Node) bool {
-	node = ast.SkipParentheses(node)
+	node = skipParenthesesSafe(node)
 	if node == nil {
 		return false
 	}
@@ -118,7 +125,7 @@ func isNullishLiteral(node *ast.Node) bool {
 }
 
 func isNullishComparison(node *ast.Node, parameterName string) bool {
-	node = ast.SkipParentheses(node)
+	node = skipParenthesesSafe(node)
 	if node == nil || !ast.IsBinaryExpression(node) {
 		return false
 	}
@@ -138,7 +145,7 @@ func isNullishComparison(node *ast.Node, parameterName string) bool {
 }
 
 func isNullishGuardExpression(node *ast.Node, parameterName string) bool {
-	node = ast.SkipParentheses(node)
+	node = skipParenthesesSafe(node)
 	if node == nil {
 		return false
 	}
