@@ -1,14 +1,5 @@
 
 [TestNoTypeAssertion/invalid-0 - 1]
-Diagnostic 1: typeAssertion (3:14 - 3:21)
-Message: Type assertion `as any`. The expression type is `string`. Try removing the assertion or narrowing the type instead.
-   2 |             const x: string = "hello";
-   3 |             const y = x as any;
-     |                       ~~~~~~~~
-   4 |         
----
-
-[TestNoTypeAssertion/invalid-1 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:24)
 Message: Type assertion `as string`. The expression type is `string | number`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: string | number;
@@ -17,7 +8,7 @@ Message: Type assertion `as string`. The expression type is `string | number`. T
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-2 - 1]
+[TestNoTypeAssertion/invalid-1 - 1]
 Diagnostic 1: typeAssertionRedundant (3:14 - 3:24)
 Message: Type assertion `as string` is redundant, the expression already has this type. Remove the assertion.
    2 |             const x: string = "hello";
@@ -26,12 +17,21 @@ Message: Type assertion `as string` is redundant, the expression already has thi
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-3 - 1]
+[TestNoTypeAssertion/invalid-2 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:22)
 Message: Type assertion `as string`. The expression type is `string | number`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: string | number;
    3 |             const y = <string>x;
      |                       ~~~~~~~~~
+   4 |         
+---
+
+[TestNoTypeAssertion/invalid-3 - 1]
+Diagnostic 1: typeAssertion (3:14 - 3:21)
+Message: Type assertion `as any`. The expression type is `string`. Try removing the assertion or narrowing the type instead.
+   2 |             const x: string = "hello";
+   3 |             const y = x as any;
+     |                       ~~~~~~~~
    4 |         
 ---
 
@@ -45,15 +45,6 @@ Message: Type assertion `as unknown`. The expression type is `"hello"`. Try remo
 ---
 
 [TestNoTypeAssertion/invalid-5 - 1]
-Diagnostic 1: typeAssertionFromAny (3:14 - 3:24)
-Message: Type assertion `as string` from `unknown`. Consider adding a type annotation at the source instead.
-   2 |             declare const x: unknown;
-   3 |             const y = x as string;
-     |                       ~~~~~~~~~~~
-   4 |         
----
-
-[TestNoTypeAssertion/invalid-6 - 1]
 Diagnostic 1: typeAssertion (4:14 - 4:22)
 Message: Type assertion `as User ({ name: string; age: number })`. The expression type is `Error | User (Error | User ({ name: string; age: number }))`. Try removing the assertion or narrowing the type instead.
    3 |             declare const x: User | Error;
@@ -62,7 +53,7 @@ Message: Type assertion `as User ({ name: string; age: number })`. The expressio
    5 |         
 ---
 
-[TestNoTypeAssertion/invalid-7 - 1]
+[TestNoTypeAssertion/invalid-6 - 1]
 Diagnostic 1: typeAssertion (4:14 - 4:24)
 Message: Type assertion `as Config ({ host: string; port: number })`. The expression type is `Config | null (null | Config ({ host: string; port: number }))`. Try removing the assertion or narrowing the type instead.
    3 |             declare const x: Config | null;
@@ -71,7 +62,7 @@ Message: Type assertion `as Config ({ host: string; port: number })`. The expres
    5 |         
 ---
 
-[TestNoTypeAssertion/invalid-8 - 1]
+[TestNoTypeAssertion/invalid-7 - 1]
 Diagnostic 1: typeAssertion (5:14 - 5:24)
 Message: Type assertion `as Person ({ name: string; address: Address })`. The expression type is `Person | null (null | Person ({ name: string; address: Address }))`. Try removing the assertion or narrowing the type instead.
    4 |             declare const x: Person | null;
@@ -80,7 +71,7 @@ Message: Type assertion `as Person ({ name: string; address: Address })`. The ex
    6 |         
 ---
 
-[TestNoTypeAssertion/invalid-9 - 1]
+[TestNoTypeAssertion/invalid-8 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:31)
 Message: Type assertion `as string[]`. The expression type is `string[] | null`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: Array<string> | null;
@@ -89,7 +80,7 @@ Message: Type assertion `as string[]`. The expression type is `string[] | null`.
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-10 - 1]
+[TestNoTypeAssertion/invalid-9 - 1]
 Diagnostic 1: typeAssertion (4:14 - 4:29)
 Message: Type assertion `as Box<number> ({ value: number })`. The expression type is `Box<number> | undefined (undefined | Box<number> ({ value: number }))`. Try removing the assertion or narrowing the type instead.
    3 |             declare const x: Box<number> | undefined;
@@ -98,7 +89,7 @@ Message: Type assertion `as Box<number> ({ value: number })`. The expression typ
    5 |         
 ---
 
-[TestNoTypeAssertion/invalid-11 - 1]
+[TestNoTypeAssertion/invalid-10 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:37)
 Message: Type assertion `as Map<string, number>`. The expression type is `Map<string, number> | null`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: Map<string, number> | null;
@@ -107,7 +98,7 @@ Message: Type assertion `as Map<string, number>`. The expression type is `Map<st
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-12 - 1]
+[TestNoTypeAssertion/invalid-11 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:33)
 Message: Type assertion `as string | number`. The expression type is `string | number | boolean`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: string | number | boolean;
@@ -116,7 +107,7 @@ Message: Type assertion `as string | number`. The expression type is `string | n
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-13 - 1]
+[TestNoTypeAssertion/invalid-12 - 1]
 Diagnostic 1: typeAssertion (5:14 - 5:30)
 Message: Type assertion `as Named & Aged`. The expression type is `Named ({ name: string })`. Try removing the assertion or narrowing the type instead.
    4 |             declare const x: Named;
@@ -125,7 +116,7 @@ Message: Type assertion `as Named & Aged`. The expression type is `Named ({ name
    6 |         
 ---
 
-[TestNoTypeAssertion/invalid-14 - 1]
+[TestNoTypeAssertion/invalid-13 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:25)
 Message: Type assertion `as "hello"`. The expression type is `string`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: string;
@@ -134,7 +125,7 @@ Message: Type assertion `as "hello"`. The expression type is `string`. Try remov
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-15 - 1]
+[TestNoTypeAssertion/invalid-14 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:20)
 Message: Type assertion `as 42`. The expression type is `number`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: number;
@@ -143,7 +134,7 @@ Message: Type assertion `as 42`. The expression type is `number`. Try removing t
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-16 - 1]
+[TestNoTypeAssertion/invalid-15 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:28)
 Message: Type assertion `as () => void ({ () => void })`. The expression type is `(() => void) | null (null | () => void ({ () => void }))`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: (() => void) | null;
@@ -152,7 +143,7 @@ Message: Type assertion `as () => void ({ () => void })`. The expression type is
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-17 - 1]
+[TestNoTypeAssertion/invalid-16 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:34)
 Message: Type assertion `as [string, number]`. The expression type is `[string, number] | null`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: [string, number] | null;
@@ -161,7 +152,7 @@ Message: Type assertion `as [string, number]`. The expression type is `[string, 
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-18 - 1]
+[TestNoTypeAssertion/invalid-17 - 1]
 Diagnostic 1: typeAssertion (5:14 - 5:21)
 Message: Type assertion `as Dog ({ breed: string; species: string })`. The expression type is `Animal ({ species: string })`. Try removing the assertion or narrowing the type instead.
    4 |             declare const x: Animal;
@@ -170,15 +161,8 @@ Message: Type assertion `as Dog ({ breed: string; species: string })`. The expre
    6 |         
 ---
 
-[TestNoTypeAssertion/invalid-19 - 1]
-Diagnostic 1: typeAssertionFromAny (3:14 - 3:37)
-Message: Type assertion `as number` from `unknown`. The original expression type is `string`. Consider narrowing the type instead.
-   2 |             declare const x: string;
-   3 |             const y = (x as unknown) as number;
-     |                       ~~~~~~~~~~~~~~~~~~~~~~~~
-   4 |         
-
-Diagnostic 2: typeAssertion (3:15 - 3:26)
+[TestNoTypeAssertion/invalid-18 - 1]
+Diagnostic 1: typeAssertion (3:15 - 3:26)
 Message: Type assertion `as unknown`. The expression type is `string`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: string;
    3 |             const y = (x as unknown) as number;
@@ -186,15 +170,8 @@ Message: Type assertion `as unknown`. The expression type is `string`. Try remov
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-20 - 1]
-Diagnostic 1: typeAssertionFromAny (4:14 - 4:33)
-Message: Type assertion `as User ({ name: string; age: number })` from `unknown`. The original expression type is `string`. Consider narrowing the type instead.
-   3 |             declare const x: string;
-   4 |             const y = x as unknown as User;
-     |                       ~~~~~~~~~~~~~~~~~~~~
-   5 |         
-
-Diagnostic 2: typeAssertion (4:14 - 4:25)
+[TestNoTypeAssertion/invalid-19 - 1]
+Diagnostic 1: typeAssertion (4:14 - 4:25)
 Message: Type assertion `as unknown`. The expression type is `string`. Try removing the assertion or narrowing the type instead.
    3 |             declare const x: string;
    4 |             const y = x as unknown as User;
@@ -202,15 +179,8 @@ Message: Type assertion `as unknown`. The expression type is `string`. Try remov
    5 |         
 ---
 
-[TestNoTypeAssertion/invalid-21 - 1]
-Diagnostic 1: typeAssertionFromAny (3:14 - 3:45)
-Message: Type assertion `as string | boolean` from `unknown`. The original expression type is `number`. Consider narrowing the type instead.
-   2 |             declare const x: number;
-   3 |             const y = x as unknown as string | boolean;
-     |                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   4 |         
-
-Diagnostic 2: typeAssertion (3:14 - 3:25)
+[TestNoTypeAssertion/invalid-20 - 1]
+Diagnostic 1: typeAssertion (3:14 - 3:25)
 Message: Type assertion `as unknown`. The expression type is `number`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: number;
    3 |             const y = x as unknown as string | boolean;
@@ -218,15 +188,8 @@ Message: Type assertion `as unknown`. The expression type is `number`. Try remov
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-22 - 1]
-Diagnostic 1: typeAssertionFromAny (4:14 - 4:33)
-Message: Type assertion `as Config ({ host: string; port: number })` from `any`. The original expression type is `string`. Consider narrowing the type instead.
-   3 |             declare const x: string;
-   4 |             const y = (x as any) as Config;
-     |                       ~~~~~~~~~~~~~~~~~~~~
-   5 |         
-
-Diagnostic 2: typeAssertion (4:15 - 4:22)
+[TestNoTypeAssertion/invalid-21 - 1]
+Diagnostic 1: typeAssertion (4:15 - 4:22)
 Message: Type assertion `as any`. The expression type is `string`. Try removing the assertion or narrowing the type instead.
    3 |             declare const x: string;
    4 |             const y = (x as any) as Config;
@@ -234,22 +197,8 @@ Message: Type assertion `as any`. The expression type is `string`. Try removing 
    5 |         
 ---
 
-[TestNoTypeAssertion/invalid-23 - 1]
-Diagnostic 1: typeAssertionFromAny (3:14 - 3:44)
-Message: Type assertion `as string` from `any`. The original expression type is `number`. Consider narrowing the type instead.
-   2 |             declare const x: number;
-   3 |             const y = (x as unknown as any) as string;
-     |                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   4 |         
-
-Diagnostic 2: typeAssertionFromAny (3:15 - 3:33)
-Message: Type assertion `as any` from `unknown`. The original expression type is `number`. Consider narrowing the type instead.
-   2 |             declare const x: number;
-   3 |             const y = (x as unknown as any) as string;
-     |                        ~~~~~~~~~~~~~~~~~~~
-   4 |         
-
-Diagnostic 3: typeAssertion (3:15 - 3:26)
+[TestNoTypeAssertion/invalid-22 - 1]
+Diagnostic 1: typeAssertion (3:15 - 3:26)
 Message: Type assertion `as unknown`. The expression type is `number`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: number;
    3 |             const y = (x as unknown as any) as string;
@@ -257,15 +206,8 @@ Message: Type assertion `as unknown`. The expression type is `number`. Try remov
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-24 - 1]
-Diagnostic 1: typeAssertionFromAny (3:14 - 3:48)
-Message: Type assertion `as Map<string, number>` from `unknown`. The original expression type is `string[]`. Consider narrowing the type instead.
-   2 |             declare const x: string[];
-   3 |             const y = x as unknown as Map<string, number>;
-     |                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-   4 |         
-
-Diagnostic 2: typeAssertion (3:14 - 3:25)
+[TestNoTypeAssertion/invalid-23 - 1]
+Diagnostic 1: typeAssertion (3:14 - 3:25)
 Message: Type assertion `as unknown`. The expression type is `string[]`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: string[];
    3 |             const y = x as unknown as Map<string, number>;
@@ -273,7 +215,7 @@ Message: Type assertion `as unknown`. The expression type is `string[]`. Try rem
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-25 - 1]
+[TestNoTypeAssertion/invalid-24 - 1]
 Diagnostic 1: typeAssertion (4:14 - 4:27)
 Message: Type assertion `as Direction`. The expression type is `number`. Try removing the assertion or narrowing the type instead.
    3 |             declare const x: number;
@@ -282,7 +224,7 @@ Message: Type assertion `as Direction`. The expression type is `number`. Try rem
    5 |         
 ---
 
-[TestNoTypeAssertion/invalid-26 - 1]
+[TestNoTypeAssertion/invalid-25 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:33)
 Message: Type assertion `as Promise<string>`. The expression type is `Promise<string> | null`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: Promise<string> | null;
@@ -291,7 +233,7 @@ Message: Type assertion `as Promise<string>`. The expression type is `Promise<st
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-27 - 1]
+[TestNoTypeAssertion/invalid-26 - 1]
 Diagnostic 1: typeAssertion (3:14 - 3:40)
 Message: Type assertion `as Record<string, number>`. The expression type is `Record<string, number> | null`. Try removing the assertion or narrowing the type instead.
    2 |             declare const x: Record<string, number> | null;
@@ -300,16 +242,7 @@ Message: Type assertion `as Record<string, number>`. The expression type is `Rec
    4 |         
 ---
 
-[TestNoTypeAssertion/invalid-28 - 1]
-Diagnostic 1: typeAssertion (4:14 - 4:31)
-Message: Type assertion `as Partial<User>`. The expression type is `Partial<User> | null`. Try removing the assertion or narrowing the type instead.
-   3 |             declare const x: Partial<User> | null;
-   4 |             const y = x as Partial<User>;
-     |                       ~~~~~~~~~~~~~~~~~~
-   5 |         
----
-
-[TestNoTypeAssertion/invalid-29 - 1]
+[TestNoTypeAssertion/invalid-27 - 1]
 Diagnostic 1: typeAssertion (4:14 - 4:31)
 Message: Type assertion `as Partial<User>`. The expression type is `Partial<User> | null`. Try removing the assertion or narrowing the type instead.
    3 |             declare const x: Partial<User> | null;

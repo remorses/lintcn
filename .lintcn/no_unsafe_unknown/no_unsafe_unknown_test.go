@@ -26,6 +26,7 @@ var validCases = []rule_tester.ValidTestCase{
 	{Code: `function parse(): unknown { return undefined }`},
 	{Code: `const value = input as string;`},
 	{Code: `declare const value: unknown; const result = value as { id: string };`},
+	{Code: `declare const value: unknown; const result = value as string;`},
 	{Code: `const value = { a: 1 } as const;`},
 	{Code: `function wrap<T>(value: T) { return value }`},
 }
@@ -116,15 +117,8 @@ var invalidCases = []rule_tester.InvalidTestCase{
 		},
 	},
 	{
-		Code: `declare const value: unknown; const result = value as string;`,
-		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "unknownAssertionFromUnknown"},
-		},
-	},
-	{
 		Code: `declare const value: { id: string }; const result = (value as unknown) as Map<string, number>;`,
 		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "unknownAssertionFromUnknown"},
 			{MessageId: "unknownAssertion"},
 		},
 	},

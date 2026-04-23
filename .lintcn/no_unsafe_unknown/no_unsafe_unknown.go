@@ -177,15 +177,7 @@ var NoUnsafeUnknownRule = rule.Rule{
 			if expressionType == nil || !utils.IsTypeUnknownType(expressionType) {
 				return
 			}
-			if isAllowedUnknownAssertionTarget(typeAnnotation) {
-				return
-			}
-
-			originalType := ""
-			if unwrapped := unwrapAssertionChain(ctx, expression); unwrapped != nil {
-				originalType = safeTypeString(ctx.TypeChecker, unwrapped)
-			}
-			ctx.ReportNode(node, buildUnknownAssertionFromUnknownMessage(assertedTypeStr, originalType))
+			return
 		}
 
 		return rule.RuleListeners{

@@ -237,37 +237,10 @@ var NoTypeAssertionRule = rule.Rule{
 
 			assertedStr := formatType(ctx.TypeChecker, ctx.Program, assertedType)
 
-			// When the expression type is any/unknown — walk back through nested
-			// as-expressions to find the original source type before the casts.
-			// e.g. (x as unknown) as User → show "string" not "unknown"
+			// Assertions from any/unknown are allowed.
+			// This is the normal escape hatch for untyped inputs and incremental
+			// migration code, so the rule only warns when the source is already typed.
 			if utils.IsTypeAnyType(expressionType) || utils.IsTypeUnknownType(expressionType) {
-				originalType := unwrapAssertionChain(ctx, expression)
-
-				// If the source is genuinely `any` (not part of a chain like
-				// `x as any as Foo`), skip — casting from any to a concrete type
-				// is the standard way to use untyped APIs (e.g. response.json()).
-				if utils.IsTypeAnyType(expressionType) && originalType == nil {
-					return
-				}
-
-				if originalType != nil {
-					originalStr := formatType(ctx.TypeChecker, ctx.Program, originalType)
-					ctx.ReportNode(node, rule.RuleMessage{
-						Id: "typeAssertionFromAny",
-						Description: fmt.Sprintf(
-							"Type assertion `as %s` from `%s`. The original expression type is `%s`. Consider narrowing the type instead.",
-							assertedStr, safeTypeString(ctx.TypeChecker, expressionType), originalStr,
-						),
-					})
-				} else {
-					ctx.ReportNode(node, rule.RuleMessage{
-						Id: "typeAssertionFromAny",
-						Description: fmt.Sprintf(
-							"Type assertion `as %s` from `%s`. Consider adding a type annotation at the source instead.",
-							assertedStr, safeTypeString(ctx.TypeChecker, expressionType),
-						),
-					})
-				}
 				return
 			}
 

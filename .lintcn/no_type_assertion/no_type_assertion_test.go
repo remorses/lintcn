@@ -64,20 +64,32 @@ var validCases = []rule_tester.ValidTestCase{
 		declare const x: any;
 		const y = x as string[];
 	`},
+	// unknown source is also allowed
+	{Code: `
+		declare const x: unknown;
+		const y = x as string;
+	`},
+	// target any / unknown is still warned when the source was already typed
+	{Code: `
+		declare const x: any;
+		const y = x as any;
+	`},
+	{Code: `
+		declare const x: unknown;
+		const y = x as unknown;
+	`},
+	{Code: `
+		const x: string = "hello";
+		const y = x;
+	`},
+	{Code: `
+		const x = "hello";
+		const y = x;
+	`},
 }
 
 var invalidCases = []rule_tester.InvalidTestCase{
 	// --- primitives ---
-	// as any from typed
-	{
-		Code: `
-			const x: string = "hello";
-			const y = x as any;
-		`,
-		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "typeAssertion"},
-		},
-	},
 	// as specific type narrowing a union
 	{
 		Code: `
@@ -108,23 +120,23 @@ var invalidCases = []rule_tester.InvalidTestCase{
 			{MessageId: "typeAssertion"},
 		},
 	},
-	// as unknown
+	// typed source cast to any
+	{
+		Code: `
+			const x: string = "hello";
+			const y = x as any;
+		`,
+		Errors: []rule_tester.InvalidTestCaseError{
+			{MessageId: "typeAssertion"},
+		},
+	},
+	// typed source cast to unknown
 	{
 		Code: `
 			const x = "hello" as unknown;
 		`,
 		Errors: []rule_tester.InvalidTestCaseError{
 			{MessageId: "typeAssertion"},
-		},
-	},
-	// from unknown source (still warns — unknown requires narrowing, not casting)
-	{
-		Code: `
-			declare const x: unknown;
-			const y = x as string;
-		`,
-		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "typeAssertionFromAny"},
 		},
 	},
 
@@ -280,14 +292,13 @@ var invalidCases = []rule_tester.InvalidTestCase{
 
 	// --- double assertion (as unknown as X) ---
 	// Inner: string as unknown → typeAssertion (from string)
-	// Outer: unknown as number → typeAssertionFromAny (from unknown)
+	// Outer: unknown as number is allowed. Inner typed -> unknown still warns.
 	{
 		Code: `
 			declare const x: string;
 			const y = (x as unknown) as number;
 		`,
 		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "typeAssertionFromAny"},
 			{MessageId: "typeAssertion"},
 		},
 	},
@@ -299,7 +310,6 @@ var invalidCases = []rule_tester.InvalidTestCase{
 			const y = x as unknown as User;
 		`,
 		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "typeAssertionFromAny"},
 			{MessageId: "typeAssertion"},
 		},
 	},
@@ -310,11 +320,10 @@ var invalidCases = []rule_tester.InvalidTestCase{
 			const y = x as unknown as string | boolean;
 		`,
 		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "typeAssertionFromAny"},
 			{MessageId: "typeAssertion"},
 		},
 	},
-	// as any as X (common in legacy code)
+	// as any as X. Outer any -> X is allowed. Inner typed -> any still warns.
 	{
 		Code: `
 			interface Config { host: string; port: number; }
@@ -322,30 +331,26 @@ var invalidCases = []rule_tester.InvalidTestCase{
 			const y = (x as any) as Config;
 		`,
 		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "typeAssertionFromAny"},
 			{MessageId: "typeAssertion"},
 		},
 	},
-	// triple assertion: as unknown as any as X
+	// triple assertion: only the first typed -> unknown assertion warns
 	{
 		Code: `
 			declare const x: number;
 			const y = (x as unknown as any) as string;
 		`,
 		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "typeAssertionFromAny"},
-			{MessageId: "typeAssertionFromAny"},
 			{MessageId: "typeAssertion"},
 		},
 	},
-	// as unknown as generic
+	// as unknown as generic: only the first typed -> unknown assertion warns
 	{
 		Code: `
 			declare const x: string[];
 			const y = x as unknown as Map<string, number>;
 		`,
 		Errors: []rule_tester.InvalidTestCaseError{
-			{MessageId: "typeAssertionFromAny"},
 			{MessageId: "typeAssertion"},
 		},
 	},
