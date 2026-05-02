@@ -28,9 +28,9 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "rm -rf dist *.tsbuildinfo && tsc && chmod +x dist/cli.js",
-    "cli": "tsx src/cli",
-    "prepublishOnly": "pnpm build"
+    "build": "tsc && chmod +x dist/cli.js",
+    "cli": "tsx src/cli.ts",
+    "prepublishOnly": "rimraf dist \"*.tsbuildinfo\" && pnpm build"
   },
   "keywords": [
     "lint",
@@ -58,6 +58,8 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "@types/tar": "^7.0.87",
+    "rimraf": "^6.0.1",
+    "tsx": "^4.20.6",
     "typescript": "5.8.2"
   },
   "dependencies": {
