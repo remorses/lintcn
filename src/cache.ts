@@ -27,8 +27,6 @@ const TYPESCRIPT_GO_COMMIT = 'c0703e66b68b826eedadce353d63fe9f4ea21fb6'
 
 // Strict pattern for version strings — prevents path traversal via ../
 const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/
-const CACHE_LOCK_RETRY_MS = 100
-const CACHE_LOCK_TIMEOUT_MS = 10 * 60_000
 
 /** Validate version string to prevent path traversal attacks.
  *  Only allows alphanumeric chars, dots, underscores, and hyphens. */
@@ -60,49 +58,6 @@ export function getBinaryPath(contentHash: string): string {
 /** Per-hash build directory to avoid races between concurrent lintcn processes. */
 export function getBuildDir(contentHash: string): string {
   return path.join(getCacheDir(), 'build', contentHash)
-}
-
-/** Per-hash lock directory used while generating and compiling a build workspace. */
-export function getBuildLockDir(contentHash: string): string {
-  return path.join(getCacheDir(), 'locks', 'build', contentHash)
-}
-
-/** Per-version lock directory used while populating cached tsgolint source. */
-export function getTsgolintSourceLockDir(version: string): string {
-  return path.join(getCacheDir(), 'locks', 'tsgolint', version)
-}
-
-async function wait(ms: number): Promise<void> {
-  await new Promise((resolve) => {
-    setTimeout(resolve, ms)
-  })
-}
-
-function isErrorWithCode(error: unknown, code: string): boolean {
-  return error instanceof Error && (error as NodeJS.ErrnoException).code === code
-}
-
-export async function acquireCacheLock(lockDir: string, description: string): Promise<string> {
-  fs.mkdirSync(path.dirname(lockDir), { recursive: true })
-
-  const startedAt = Date.now()
-  while (true) {
-    try {
-      fs.mkdirSync(lockDir)
-      return lockDir
-    } catch (error) {
-      if (!isErrorWithCode(error, 'EEXIST')) {
-        throw error
-      }
-      if (Date.now() - startedAt > CACHE_LOCK_TIMEOUT_MS) {
-        throw new Error(
-          `Timed out waiting for ${description}: ${lockDir}. ` +
-          'If no lintcn process is running, delete this directory and retry.',
-        )
-      }
-      await wait(CACHE_LOCK_RETRY_MS)
-    }
-  }
 }
 
 /** Download a tarball from URL and extract it to targetDir.
@@ -171,74 +126,64 @@ export async function ensureTsgolintSource(version: string): Promise<string> {
     return sourceDir
   }
 
-  const sourceLockDir = await acquireCacheLock(
-    getTsgolintSourceLockDir(version),
-    `tsgolint source lock for ${version}`,
-  )
+  // Use a temp directory for the download, then atomic rename on success.
+  // This prevents concurrent processes from seeing partial state, and
+  // avoids the "non-empty dir on retry" problem.
+  const tmpDir = path.join(getCacheDir(), 'tsgolint', `.tmp-${version}-${crypto.randomBytes(4).toString('hex')}`)
+
+  // clean up any partial previous attempt
+  if (fs.existsSync(sourceDir)) {
+    fs.rmSync(sourceDir, { recursive: true })
+  }
+
   try {
-    if (fs.existsSync(readyMarker)) {
-      return sourceDir
+    // download tsgolint fork tarball
+    console.log(`Downloading tsgolint@${version.slice(0, 8)}...`)
+    const tsgolintUrl = `https://github.com/remorses/tsgolint/archive/${version}.tar.gz`
+    await downloadAndExtract(tsgolintUrl, tmpDir)
+
+    // download typescript-go from microsoft (base commit before patches)
+    const tsGoDir = path.join(tmpDir, 'typescript-go')
+    console.log('Downloading typescript-go...')
+    const tsGoUrl = `https://github.com/microsoft/typescript-go/archive/${TYPESCRIPT_GO_COMMIT}.tar.gz`
+    await downloadAndExtract(tsGoUrl, tsGoDir)
+
+    // apply tsgolint's patches to typescript-go
+    const patchesDir = path.join(tmpDir, 'patches')
+    if (fs.existsSync(patchesDir)) {
+      const count = await applyPatches(patchesDir, tsGoDir)
+      if (count > 0) {
+        console.log(`Applied ${count} patches`)
+      }
     }
 
-    // Use a temp directory for the download, then atomic rename on success.
-    // This prevents concurrent processes from seeing partial state, and
-    // avoids the "non-empty dir on retry" problem.
-    const tmpDir = path.join(getCacheDir(), 'tsgolint', `.tmp-${version}-${crypto.randomBytes(4).toString('hex')}`)
-
-    // clean up any partial previous attempt
-    fs.rmSync(sourceDir, { recursive: true, force: true })
-
-    try {
-      // download tsgolint fork tarball
-      console.log(`Downloading tsgolint@${version.slice(0, 8)}...`)
-      const tsgolintUrl = `https://github.com/remorses/tsgolint/archive/${version}.tar.gz`
-      await downloadAndExtract(tsgolintUrl, tmpDir)
-
-      // download typescript-go from microsoft (base commit before patches)
-      const tsGoDir = path.join(tmpDir, 'typescript-go')
-      console.log('Downloading typescript-go...')
-      const tsGoUrl = `https://github.com/microsoft/typescript-go/archive/${TYPESCRIPT_GO_COMMIT}.tar.gz`
-      await downloadAndExtract(tsGoUrl, tsGoDir)
-
-      // apply tsgolint's patches to typescript-go
-      const patchesDir = path.join(tmpDir, 'patches')
-      if (fs.existsSync(patchesDir)) {
-        const count = await applyPatches(patchesDir, tsGoDir)
-        if (count > 0) {
-          console.log(`Applied ${count} patches`)
-        }
+    // copy internal/collections from typescript-go (required by tsgolint, done by `just init`)
+    const collectionsDir = path.join(tmpDir, 'internal', 'collections')
+    const tsGoCollections = path.join(tsGoDir, 'internal', 'collections')
+    if (fs.existsSync(tsGoCollections)) {
+      fs.mkdirSync(collectionsDir, { recursive: true })
+      const files = fs.readdirSync(tsGoCollections).filter((f) => {
+        return f.endsWith('.go') && !f.endsWith('_test.go')
+      })
+      for (const file of files) {
+        fs.copyFileSync(path.join(tsGoCollections, file), path.join(collectionsDir, file))
       }
-
-      // copy internal/collections from typescript-go (required by tsgolint, done by `just init`)
-      const collectionsDir = path.join(tmpDir, 'internal', 'collections')
-      const tsGoCollections = path.join(tsGoDir, 'internal', 'collections')
-      if (fs.existsSync(tsGoCollections)) {
-        fs.mkdirSync(collectionsDir, { recursive: true })
-        const files = fs.readdirSync(tsGoCollections).filter((f) => {
-          return f.endsWith('.go') && !f.endsWith('_test.go')
-        })
-        for (const file of files) {
-          fs.copyFileSync(path.join(tsGoCollections, file), path.join(collectionsDir, file))
-        }
-      }
-
-      // write ready marker
-      fs.writeFileSync(path.join(tmpDir, '.lintcn-ready'), new Date().toISOString())
-
-      // atomic rename: move completed dir to final location
-      fs.mkdirSync(path.dirname(sourceDir), { recursive: true })
-      fs.renameSync(tmpDir, sourceDir)
-
-      console.log('tsgolint source ready')
-    } catch (err) {
-      // clean up partial temp directory
-      if (fs.existsSync(tmpDir)) {
-        fs.rmSync(tmpDir, { recursive: true })
-      }
-      throw err
     }
-  } finally {
-    fs.rmSync(sourceLockDir, { recursive: true, force: true })
+
+    // write ready marker
+    fs.writeFileSync(path.join(tmpDir, '.lintcn-ready'), new Date().toISOString())
+
+    // atomic rename: move completed dir to final location
+    fs.mkdirSync(path.dirname(sourceDir), { recursive: true })
+    fs.renameSync(tmpDir, sourceDir)
+
+    console.log('tsgolint source ready')
+  } catch (err) {
+    // clean up partial temp directory
+    if (fs.existsSync(tmpDir)) {
+      fs.rmSync(tmpDir, { recursive: true })
+    }
+    throw err
   }
 
   return sourceDir

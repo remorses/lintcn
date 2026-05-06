@@ -89,12 +89,16 @@ export function generateBuildWorkspace({
 
   // symlink tsgolint source
   const tsgolintLink = path.join(buildDir, 'tsgolint')
-  fs.rmSync(tsgolintLink, { recursive: true, force: true })
+  if (fs.existsSync(tsgolintLink)) {
+    fs.rmSync(tsgolintLink, { recursive: true })
+  }
   fs.symlinkSync(tsgolintDir, tsgolintLink)
 
   // symlink user rules
   const rulesLink = path.join(buildDir, 'rules')
-  fs.rmSync(rulesLink, { recursive: true, force: true })
+  if (fs.existsSync(rulesLink)) {
+    fs.rmSync(rulesLink, { recursive: true })
+  }
   fs.symlinkSync(path.resolve(lintcnDir), rulesLink)
 
   // go.work
