@@ -1,3 +1,28 @@
+## 0.10.0
+
+1. **New rule: `prefer-is-truthy` (error)** — errors on inline nullable type guards passed directly to `filter`. When the callback parameter is already `T | null | undefined`, prefer a reusable `isTruthy` helper over an ad hoc predicate at the call site:
+
+   ```ts
+   // flagged — ad hoc inline type guard
+   const active = pokemon.filter(
+     (value): value is Pokemon => value !== null,
+   )
+
+   // preferred — reusable helper
+   const active = pokemon.filter(isTruthy)
+   ```
+
+   Standalone reusable guards, filter callbacks without a type predicate, and other callback sites are exempt.
+
+2. **`no-type-assertion` no longer warns when the source is `any` or `unknown`** — assertions from `any` or `unknown` are now silently allowed since they're the standard pattern for untyped or narrowing contexts. Warnings are still emitted when a typed value is cast to `any`, `unknown`, or an unrelated concrete type:
+
+   ```ts
+   const x = response.data as User  // allowed when response.data is `any`
+   const y = value as unknown        // still warned — escaping a typed value
+   ```
+
+3. **`no-unsafe-unknown` aligns with `no-type-assertion`** — casts from `unknown` into a concrete target type no longer warn (that's a normal narrowing pattern). Warnings are kept for explicit `unknown` targets and assertions that embed `unknown` in a larger type like `Promise<unknown>`.
+
 ## 0.9.0
 
 1. **New rule: `no-redundant-exported-return-type` (warn)** — warns when exported APIs keep spelling `ReturnType<typeof ...>` even though the function already returns a public named type. This keeps public types direct and easier to read:
