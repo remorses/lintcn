@@ -87,12 +87,6 @@ export async function buildBinary({
     tsgolintVersion,
   })
 
-  // check cache
-  if (!rebuild && cachedBinaryExists(contentHash)) {
-    console.log('Using cached binary')
-    return getBinaryPath(contentHash)
-  }
-
   const buildDir = getBuildDir(contentHash)
   const buildLockDir = await acquireBuildLock(buildDir)
   try {
