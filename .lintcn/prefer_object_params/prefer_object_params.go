@@ -110,12 +110,29 @@ func definitionName(node *ast.Node) string {
 		return ""
 	}
 	if name := node.Name(); name != nil {
-		return name.Text()
+		return supportedNameText(name)
 	}
 	if node.Parent != nil && node.Parent.Name() != nil {
-		return node.Parent.Name().Text()
+		return supportedNameText(node.Parent.Name())
 	}
 	return ""
+}
+
+func supportedNameText(node *ast.Node) string {
+	if node == nil {
+		return ""
+	}
+	switch node.Kind {
+	case ast.KindIdentifier,
+		ast.KindPrivateIdentifier,
+		ast.KindStringLiteral,
+		ast.KindNumericLiteral,
+		ast.KindBigIntLiteral,
+		ast.KindNoSubstitutionTemplateLiteral:
+		return node.Text()
+	default:
+		return ""
+	}
 }
 
 func messageNodeForDefinition(node *ast.Node) *ast.Node {

@@ -191,4 +191,28 @@ var invalidCases = []rule_tester.InvalidTestCase{
 		`,
 		Errors: []rule_tester.InvalidTestCaseError{{MessageId: "preferObjectParams"}},
 	},
+	{
+		Code: `
+			declare const captureRejectionSymbol: unique symbol
+
+			class Http2Session {
+				[captureRejectionSymbol](err: Error, event: string, args: unknown[]) {
+					return { err, event, args }
+				}
+			}
+		`,
+		Errors: []rule_tester.InvalidTestCaseError{{MessageId: "preferObjectParams"}},
+	},
+	{
+		Code: `
+			declare const key: unique symbol
+
+			const handlers = {
+				[key]: (name: string, email: string, role: string) => {
+					return { name, email, role }
+				},
+			}
+		`,
+		Errors: []rule_tester.InvalidTestCaseError{{MessageId: "preferObjectParams"}},
+	},
 }

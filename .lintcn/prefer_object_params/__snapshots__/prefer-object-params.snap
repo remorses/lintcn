@@ -70,3 +70,21 @@ Message: function `update` has 3 positional parameters. Use one object parameter
      |                 ~~~~~~
    4 |                     return { name, email, role }
 ---
+
+[TestPreferObjectParams/invalid-8 - 1]
+Diagnostic 1: preferObjectParams (5:5 - 5:28)
+Message: This method has 3 positional parameters. Use one object parameter instead.
+   4 |             class Http2Session {
+   5 |                 [captureRejectionSymbol](err: Error, event: string, args: unknown[]) {
+     |                 ~~~~~~~~~~~~~~~~~~~~~~~~
+   6 |                     return { err, event, args }
+---
+
+[TestPreferObjectParams/invalid-9 - 1]
+Diagnostic 1: preferObjectParams (5:5 - 5:9)
+Message: This function has 3 positional parameters. Use one object parameter instead.
+   4 |             const handlers = {
+   5 |                 [key]: (name: string, email: string, role: string) => {
+     |                 ~~~~~
+   6 |                     return { name, email, role }
+---
