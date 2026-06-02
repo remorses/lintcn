@@ -1,3 +1,10 @@
+## 0.10.1
+
+1. **Fixed concurrent cache builds** — multiple lintcn processes no longer corrupt each other's build cache. Cache acquisition now uses proper directory-based locking with stale lock detection and retry logic. Thanks @tanishqkancharla for #1!
+2. **Fixed prefer-object-params crash on computed property names** — the rule no longer panics when encountering computed names like `[Symbol.iterator]` or `[EventEmitter.captureRejectionSymbol]`. Diagnostics fall back to a generic message for computed names while keeping specific messages for named declarations.
+3. **Fixed no-unused-top-level-function test flakiness** — test cases now use isolated virtual tsconfig files with unique filenames, preventing cross-test interference when running in parallel.
+4. **Updated tsgolint fork** — bumped to latest `remorses/tsgolint` commit with updated `typescript-go` base. Also fixed `no-redundant-contextual-parameter-type` to use a direct Kind check instead of `ast.IsParameter()` to avoid potential panics on unexpected node kinds.
+
 ## 0.10.0
 
 1. **New rule: `prefer-is-truthy` (error)** — errors on inline nullable type guards passed directly to `filter`. When the callback parameter is already `T | null | undefined`, prefer a reusable `isTruthy` helper over an ad hoc predicate at the call site:
