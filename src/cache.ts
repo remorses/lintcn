@@ -18,12 +18,12 @@ import { execAsync } from './exec.ts'
 // Pinned tsgolint fork commit — updated with each lintcn release.
 // Uses remorses/tsgolint fork which adds internal/runner.Run() and
 // TSGOLINT_SNAPSHOT_CWD env var for cwd-relative test snapshots.
-export const DEFAULT_TSGOLINT_VERSION = '427f872946bb413f0e21cff585b6139c986c89d3'
+export const DEFAULT_TSGOLINT_VERSION = 'c031d7264983dba00bae76eb03532fe3884e5667'
 
 // Pinned typescript-go base commit from microsoft/typescript-go (before patches).
 // Patches from tsgolint/patches/ are applied on top during setup.
 // Must be updated when DEFAULT_TSGOLINT_VERSION changes.
-const TYPESCRIPT_GO_COMMIT = 'c0703e66b68b826eedadce353d63fe9f4ea21fb6'
+const TYPESCRIPT_GO_COMMIT = '0970dc40fa8308ca76627ffcc3a992414fdf1cf2'
 
 // Strict pattern for version strings — prevents path traversal via ../
 const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/
@@ -78,10 +78,6 @@ async function wait(ms: number): Promise<void> {
   })
 }
 
-function isErrorWithCode(error: unknown, code: string): boolean {
-  return error instanceof Error && (error as NodeJS.ErrnoException).code === code
-}
-
 export async function acquireCacheLock(lockDir: string, description: string): Promise<string> {
   fs.mkdirSync(path.dirname(lockDir), { recursive: true })
 
@@ -91,7 +87,7 @@ export async function acquireCacheLock(lockDir: string, description: string): Pr
       fs.mkdirSync(lockDir)
       return lockDir
     } catch (error) {
-      if (!isErrorWithCode(error, 'EEXIST')) {
+      if (error?.code !== 'EEXIST') {
         throw error
       }
       if (Date.now() - startedAt > CACHE_LOCK_TIMEOUT_MS) {

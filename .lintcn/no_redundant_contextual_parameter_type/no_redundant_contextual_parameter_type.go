@@ -139,7 +139,7 @@ var NoRedundantContextualParameterTypeRule = rule.Rule{
 			if contextualParam == nil {
 				return
 			}
-			if contextualParam.ValueDeclaration != nil && ast.IsParameter(contextualParam.ValueDeclaration) && contextualParam.ValueDeclaration.AsParameterDeclaration().DotDotDotToken != nil {
+			if contextualParam.ValueDeclaration != nil && contextualParam.ValueDeclaration.Kind == ast.KindParameter && contextualParam.ValueDeclaration.AsParameterDeclaration().DotDotDotToken != nil {
 				return
 			}
 
