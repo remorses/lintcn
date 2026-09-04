@@ -257,7 +257,7 @@ jobs:
 
 The binary cache key includes nested Go helpers and assets of any file type, including files used by `//go:embed`. File paths and raw bytes are hashed in a stable order. Changing, adding, deleting or renaming an asset invalidates the binary cache.
 
-The hash excludes `*_test.go`, `__snapshots__`, version-control directories, and lintcn's generated root entries: `.tsgolint`, `.gitignore`, `go.mod`, `go.sum`, `go.work`, and `go.work.sum`. Other files are included conservatively, so changing an unreferenced asset or a rule's README can also cause a rebuild. Source symlinks are followed; circular directory links are rejected.
+The hash excludes `*_test.go`, `__snapshots__`, version-control directories, Finder/Explorer junk (`.DS_Store`, `Thumbs.db`, `desktop.ini`), and lintcn's generated root entries: `.tsgolint`, `.gitignore`, `go.mod`, `go.sum`, `go.work`, and `go.work.sum`. Other files are included conservatively, so changing an unreferenced asset or a rule's README can also cause a rebuild. Source symlinks are followed; circular directory links are rejected.
 
 The Actions cache key includes rule assets and the package lockfile so updated binaries can be saved after either changes. The `restore-keys` fallback preserves older build inputs for reuse.
 

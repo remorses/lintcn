@@ -45,6 +45,7 @@ export async function computeContentHash({
 // These are lintcn's generated files, not inputs to the custom binary.
 const GENERATED_ROOT_ENTRIES = new Set(['.tsgolint', '.gitignore', 'go.mod', 'go.sum', 'go.work', 'go.work.sum'])
 const VCS_ENTRIES = new Set(['.git', '.hg', '.svn'])
+const JUNK_FILES = new Set(['.DS_Store', 'Thumbs.db', 'desktop.ini'])
 
 /** Include assets conservatively instead of trying to parse go:embed patterns.
  *  A cache lookup must work without invoking Go, including for binary assets. */
@@ -61,6 +62,7 @@ function collectRuleFiles(lintcnDir: string): string[] {
       for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
         if (!relative && GENERATED_ROOT_ENTRIES.has(entry.name)) continue
         if (VCS_ENTRIES.has(entry.name)) continue
+        if (JUNK_FILES.has(entry.name)) continue
         const file = relative ? `${relative}/${entry.name}` : entry.name
         const absolute = path.join(directory, entry.name)
         const stat = entry.isSymbolicLink() ? fs.statSync(absolute) : entry

@@ -88,6 +88,7 @@ test('ignores generated workspaces, cached sources and test outputs', async (t) 
     'go.sum', 'go.work.sum', '.tsgolint/internal/source.go',
     '.git/config', 'example/rule_test.go',
     'example/__snapshots__/diagnostic.snap',
+    'example/.DS_Store', 'example/Thumbs.db', 'example/desktop.ini',
   ]) project.write(file, 'generated or test-only contents')
   assert.equal(await project.hash(), initial)
 })
