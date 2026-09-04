@@ -87,7 +87,7 @@ export async function acquireCacheLock(lockDir: string, description: string): Pr
       fs.mkdirSync(lockDir)
       return lockDir
     } catch (error) {
-      if (error?.code !== 'EEXIST') {
+      if (typeof error !== 'object' || error === null || !('code' in error) || error.code !== 'EEXIST') {
         throw error
       }
       if (Date.now() - startedAt > CACHE_LOCK_TIMEOUT_MS) {

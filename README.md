@@ -224,7 +224,7 @@ Each lintcn release bundles a specific tsgolint version. Updating lintcn can cha
 
 ## CI Setup
 
-The first `lintcn lint` compiles a custom Go binary (~30s). Subsequent runs use the cached binary (<1s). Cache `~/.cache/lintcn/` and Go's build cache to keep CI fast.
+The first `lintcn lint` compiles a custom Go binary (~30s). Subsequent runs use the cached binary (<1s). A binary cache hit needs only Node.js: it does not check for Go or download compiler sources. Cache `~/.cache/lintcn/` and Go's build cache to keep CI fast.
 
 ```yaml
 # .github/workflows/lint.yml
@@ -247,7 +247,7 @@ jobs:
           path: |
             ~/.cache/lintcn
             ~/go/pkg
-          key: lintcn-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.lintcn/**/*.go') }}
+          key: lintcn-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.lintcn/**', 'package-lock.json') }}
           restore-keys: |
             lintcn-${{ runner.os }}-${{ runner.arch }}-
 
@@ -255,14 +255,18 @@ jobs:
       - run: npx lintcn lint
 ```
 
-The cache key includes a hash of your rule files — when rules change, the binary is recompiled. The `restore-keys` fallback ensures Go's build cache is still used even when rules change, so recompilation takes ~1s instead of 30s.
+The binary cache key includes nested Go helpers and assets of any file type, including files used by `//go:embed`. File paths and raw bytes are hashed in a stable order. Changing, adding, deleting or renaming an asset invalidates the binary cache.
+
+The hash excludes `*_test.go`, `__snapshots__`, version-control directories, Finder/Explorer junk (`.DS_Store`, `Thumbs.db`, `desktop.ini`), and lintcn's generated root entries: `.tsgolint`, `.gitignore`, `go.mod`, `go.sum`, `go.work`, and `go.work.sum`. Other files are included conservatively, so changing an unreferenced asset or a rule's README can also cause a rebuild. Source symlinks are followed; circular directory links are rejected.
+
+The Actions cache key includes rule assets and the package lockfile so updated binaries can be saved after either changes. The `restore-keys` fallback preserves older build inputs for reuse.
 
 ## Prerequisites
 
 - **Node.js** — for the CLI
 - **Go** — for compiling rules (`go.dev/dl`)
 
-Go is only needed for `lintcn lint` / `lintcn build`. Adding and listing rules works without Go.
+Go is needed when `lintcn lint` / `lintcn build` must compile a binary, including explicit rebuilds. Cached binaries, adding rules, and listing rules work without Go.
 
 ## License
 

@@ -31,6 +31,7 @@
     "build": "tsc && chmod +x dist/cli.js",
     "cli": "tsx src/cli.ts",
     "test": "cd .lintcn && TSGOLINT_SNAPSHOT_CWD=true go test -count=1 ./...",
+    "test:unit": "tsx --test tests/*.test.ts",
     "prepublishOnly": "rimraf dist \"*.tsbuildinfo\" && pnpm build"
   },
   "keywords": [

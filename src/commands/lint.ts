@@ -40,7 +40,6 @@ export async function buildBinary({
   tsgolintVersion: string
 }): Promise<string> {
   validateVersion(tsgolintVersion)
-  await checkGoInstalled()
 
   const lintcnDir = requireLintcnDir()
 
@@ -50,9 +49,6 @@ export async function buildBinary({
   }
 
   console.log(`Found ${rules.length} custom rule${rules.length === 1 ? '' : 's'} (tsgolint ${tsgolintVersion.slice(0, 8)})`)
-
-  // ensure tsgolint source
-  const tsgolintDir = await ensureTsgolintSource(tsgolintVersion)
 
   // compute content hash
   const { short: contentHash } = await computeContentHash({
@@ -75,6 +71,9 @@ export async function buildBinary({
       console.log('Using cached binary')
       return getBinaryPath(contentHash)
     }
+
+    await checkGoInstalled()
+    const tsgolintDir = await ensureTsgolintSource(tsgolintVersion)
 
     // ensure .lintcn/go.mod exists (gitignored, needed by the build workspace symlink)
     generateEditorGoFiles(lintcnDir)
