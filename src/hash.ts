@@ -1,6 +1,6 @@
 // Content hash for binary caching (local + remote).
 // Combines cache schema version, tsgolint version, platform triplet,
-// and non-test rule file contents into a SHA-256 hash.
+// and rule source/asset contents into a SHA-256 hash.
 //
 // The hash is deterministic across machines — same rules + same tsgolint
 // version + same platform = same hash. Go version is NOT included because
@@ -13,7 +13,7 @@ import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
-const CACHE_SCHEMA_VERSION = '4'
+const CACHE_SCHEMA_VERSION = '5'
 
 /** Compute a deterministic content hash for binary caching.
  *  Returns: { short: "a1b2c3d4..." (16 hex), full: "a1b2c3d4..." (64 hex) }
@@ -31,24 +31,49 @@ export async function computeContentHash({
   hash.update(`tsgolint:${tsgolintVersion}\n`)
   hash.update(`platform:${process.platform}-${process.arch}\n`)
 
-  // walk rule subfolders for non-test .go files in sorted order
-  const entries = fs.readdirSync(lintcnDir, { withFileTypes: true })
-    .filter((e) => { return e.isDirectory() && !e.name.startsWith('.') })
-    .sort((a, b) => { return a.name.localeCompare(b.name) })
-
-  for (const entry of entries) {
-    const subDir = path.join(lintcnDir, entry.name)
-    const goFiles = fs.readdirSync(subDir)
-      .filter((f) => { return f.endsWith('.go') && !f.endsWith('_test.go') })
-      .sort()
-
-    for (const file of goFiles) {
-      const content = fs.readFileSync(path.join(subDir, file), 'utf-8')
-      hash.update(`file:${entry.name}/${file}\n`)
-      hash.update(content)
-    }
+  for (const file of collectRuleFiles(lintcnDir).sort()) {
+    const content = fs.readFileSync(path.join(lintcnDir, file))
+    // Frame both the path and raw bytes so file boundaries are unambiguous.
+    hash.update(`file:${JSON.stringify(file)}\nsize:${content.length}\n`)
+    hash.update(content)
   }
 
   const full = hash.digest('hex')
   return { short: full.slice(0, 16), full }
+}
+
+// These are lintcn's generated files, not inputs to the custom binary.
+const GENERATED_ROOT_ENTRIES = new Set(['.tsgolint', '.gitignore', 'go.mod', 'go.sum', 'go.work', 'go.work.sum'])
+const VCS_ENTRIES = new Set(['.git', '.hg', '.svn'])
+
+/** Include assets conservatively instead of trying to parse go:embed patterns.
+ *  A cache lookup must work without invoking Go, including for binary assets. */
+function collectRuleFiles(lintcnDir: string): string[] {
+  const files: string[] = []
+  const ancestors = new Set<string>()
+  function visit(directory: string, relative: string): void {
+    const realDirectory = fs.realpathSync(directory)
+    if (ancestors.has(realDirectory)) {
+      throw new Error(`Circular symbolic link in lintcn sources: ${relative}`)
+    }
+    ancestors.add(realDirectory)
+    try {
+      for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+        if (!relative && GENERATED_ROOT_ENTRIES.has(entry.name)) continue
+        if (VCS_ENTRIES.has(entry.name)) continue
+        const file = relative ? `${relative}/${entry.name}` : entry.name
+        const absolute = path.join(directory, entry.name)
+        const stat = entry.isSymbolicLink() ? fs.statSync(absolute) : entry
+        if (stat.isDirectory()) {
+          if (entry.name !== '__snapshots__') visit(absolute, file)
+        } else if (stat.isFile() && !entry.name.endsWith('_test.go')) {
+          files.push(file)
+        }
+      }
+    } finally {
+      ancestors.delete(realDirectory)
+    }
+  }
+  visit(lintcnDir, '')
+  return files
 }

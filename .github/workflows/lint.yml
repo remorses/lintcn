@@ -20,10 +20,11 @@ jobs:
           path: |
             ~/.cache/lintcn
             ~/go/pkg
-          key: lintcn-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.lintcn/**/*.go') }}
+          key: lintcn-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('.lintcn/**', 'src/**', 'pnpm-lock.yaml') }}
           restore-keys: |
             lintcn-${{ runner.os }}-${{ runner.arch }}-
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
+      - run: pnpm test:unit
       - run: node dist/cli.js lint
